@@ -1,0 +1,222 @@
+body {
+    margin: 0;
+    padding: 0;
+   
+    font-family: 'Poppins', sans-serif;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Redressed&family=Merriweather:wght@300;400;700&display=swap");
+.redressed {
+    font-family: "Redressed", serif;
+}
+.merriweather {
+    font-family: "Merriweather", serif;
+}
+.video-container {
+    margin-bottom: 15px;
+}
+main {
+    width: 1400px;
+    margin: 0 auto;
+    height: 75vh;
+}
+
+#site-title {
+    font-family: 'Permanent Marker', cursive;
+}
+
+
+#join-wrapper{
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+#username{
+    padding: 20px;
+    font-size: 18px;
+    border-radius: 10px;
+    border:none;
+    margin: 10px;
+}
+
+.volume-icon{
+    height:20px;
+    width:20px;
+}
+
+#join-btn1 {
+
+    background-color: #1f1f1f8e;
+    border: none;
+    color: #fff;
+    font-size: 22px;
+    padding: 20px 30px;
+    cursor: pointer;
+}
+
+
+#user-streams {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 1em;
+    height: 100%;
+}
+
+
+.video-player {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.video-containers {
+    position: relative;
+    padding: 0;
+    margin: 0;
+    background-color: #1f1f1f8e;
+    border-radius: 10px;
+
+}
+
+.user-uid {
+    display: flex;
+    align-items: center;
+    column-gap: 1em;
+    background-color: #fffcfcfa;
+    padding: 5px 10px;
+    border-radius: 5px;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 9999;
+    margin: 0;
+    font-size: 18px;
+}
+
+
+#footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: none;
+    justify-content: center;
+    column-gap: 1em;
+    width: 100%;
+    height: 100px;
+    border-radius: 4em;
+}
+
+.icon-wrapper {
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+}
+
+.control-icon {
+    display: block;
+    padding: 15px;
+    background-color: #1f1f1f8e;
+    height: 30px;
+    width: 30px;
+    border-radius: 10px;
+}
+
+
+@media screen and (max-width:1400px) {
+    main {
+        width: 90%;
+        margin: 0 auto;
+    }
+}
+
+#screen-share-player{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+
+
+
+
+
+
+
+
+
+/*{box-sizing: border-box;}*/
+
+/* Button used to open the contact form - fixed at the bottom of the page */
+.open-button {
+  background-color: #555;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  opacity: 0.8;
+  position: fixed;
+  bottom: 23px;
+  right: 28px;
+  width: 280px;
+}
+
+/* The popup form - hidden by default */
+.form-popup {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  right: 15px;
+  border: 3px solid #f1f1f1;
+  z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+  max-width: 300px;
+  padding: 10px;
+  background-color: white;
+}
+
+/* Full-width input fields */
+.form-container input[type=text], .form-container input[type=password] {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  border: none;
+  background: #f1f1f1;
+}
+
+/* When the inputs get focus, do something */
+.form-container input[type=text]:focus, .form-container input[type=password]:focus {
+  background-color: #ddd;
+  outline: none;
+}
+
+/* Set a style for the submit/login button */
+.form-container .btn {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+
+/* Add a red background color to the cancel button */
+.form-container .cancel {
+  background-color: red;
+}
+
+/* Add some hover effects to buttons */
+.form-container .btn:hover, .open-button:hover {
+  opacity: 1;
+}

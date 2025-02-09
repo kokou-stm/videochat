@@ -1,0 +1,13 @@
+{% if rooms %}
+  <div class="input-group mb-3">
+    <div class="input-group-prepend">
+      <label class="input-group-text" for="inputGroupSelect01">Salles</label>
+    </div>
+    <select class="custom-select" id="inputGroupSelect01">
+      <option value="{{meeting_id.name}}" selected>Salle 0</option>
+      {% for room in rooms %}
+        <option value="{{room.name}}">{{room.name}}</option>
+      {% endfor %}
+    </select>
+  </div>
+{% endif %}

@@ -1,0 +1,1143 @@
+<!doctype html>
+{% load static %}
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>VideoCall</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+ 
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300&family=Permanent+Marker&display=swap" rel="stylesheet">
+ <!-- Bootstrap CSS -->
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+ integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'videoapp/css/style.css' %}">
+<script
+        src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
+<style>
+    @import url("https://fonts.googleapis.com/css2?family=Redressed&family=Merriweather:wght@300;400;700&display=swap");
+    .redressed {
+        font-family: "Redressed", serif;
+    }
+    .merriweather {
+        font-family: "Merriweather", serif;
+    }
+    #chatbot-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    #chatbot-modal {
+        z-index: 1050;
+    }
+
+    #chat-messages {
+        height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        background-color: #f9f9f9;
+    }
+
+    .chat-message {
+        margin-bottom: 10px;
+    }
+
+    .chat-message.user {
+        text-align: right;
+        color: rgb(10, 10, 10);
+    }
+
+    .chat-message.ia {
+        text-align: left;
+        /*color: rgb(23, 31, 23);*/
+    }
+</style>
+
+</head>
+<body class="merriweather redressed" style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
+  
+    
+<main class="container-fluid">
+    <!-- Chatbot Button -->
+
+<button id="chatbot-button" class="btn btn-primary rounded-circle shadow" style="z-index: 1000;" onclick="openChatbot()">
+    <i class="fas fa-robot"></i>
+</button>
+
+<!-- Chatbot Modal -->
+<div class="modal fade" id="chatbot-modal" tabindex="-1" aria-labelledby="chatbotLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog" >
+        <div class="modal-content bg-dark" >
+            <div class="modal-header">
+                <h5 class="modal-title text-light" id="chatbotLabel"><i class="fas fa-robot"></i> Chat avec l'IA</h5>
+                <button type="button" class="btn-close bg-light" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="chat-messages"></div>
+                <div class="input-group mt-3">
+                    <input type="text" id="user_askinput" class="form-control" placeholder="Posez votre question...">
+                    <button class="btn btn-primary" id="send-button" onclick="chat_send()">Envoyer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- <div id="users-list"></div> -->
+
+<!--h4 id="site-title">Video Call</h4-->
+
+    <div class="card mt-3   text-center flex-fill"
+    style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
+    <div class="card-header  text-light">
+        <div class="row redressed">
+            
+           
+                    
+            <div class="col-md-3" style="display: block;">
+                <button  class="btn btn-primary me-2 text-light " type="button"
+                style="border-radius: 4em; font-size: 1em;">
+                <span><i class="fas fa-user mx-2"> {{initial}}</i></span>
+            </button>
+
+                
+            </div>
+           
+         
+            <div class="col">
+                <label for="languageSelect">Input voice</label>
+                <select id="languageSelect">
+                    <!--option value="Origin">Origin</option-->
+                    <option value="fr-FR" selected>French</option>
+                    <option value="en-US">English</option>
+                    
+                    <!--option value="es-ES">Spanish</option>
+                    <option value="zh-CN">Chinese</option>
+                    <option value="hi-IN">Hindi</option-->
+                    <!-- Ajoutez d'autres options de langue selon vos besoins -->
+                </select>
+
+
+            </div>
+            <div class="col">
+                <label for="scroll-button">Out voice</label>
+                <select id="scroll-button">
+                    <!--option value="Origin">Origin</option-->
+                    
+                    <option value="en-US">English</option>
+                    <option value="fr-FR">French</option>
+                    <option selected value="original" >Original </option>
+                    
+                   
+                    
+                    <!-- Ajoutez d'autres options de langue selon vos besoins -->
+                </select>
+
+
+            </div>
+            <div class="col">
+               video call
+              
+
+                <button id="handpopup" class="btn btn-danger mr-2" type="button"
+                    style="visibility: hidden; border-radius: 4em; font-size: 1em;">
+                    <i class="fas fa-hand-point-up"></i> {{request.user.username}}
+                </button>
+            </div>
+            <div class="col">
+                <p id="timecounter">00:00</p>
+            </div>
+        </div>
+    </div>
+   
+</div>
+</div>
+
+
+<div id="join-wrapper">
+            
+            {% if meeting_id %}
+            <div class="card text-center bg-transparent" style="border: solid 1px white; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
+                <div class="card-header text-light redressed" id="reunio_titre">
+                 Details de la Reunion
+                </div>
+               
+                <div class="card-footer text-left text-light " style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
+                    <p style="display: none;">Id de la Reunion: <a class="card-text" id="channel_name" >{{meeting_id.name}}</a></p>
+                    <p class="card-text" style="display: none;">Mot de passe: {{meeting_id.password}}</p>
+                    <div class="input-group mb-3">
+                        
+                        <input type="text" id="username" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1" required>
+                    </div>
+                </div>
+                <div class=" w-100 my-2 bg-transparent redressed">
+                    <div class="row">
+                        <div class="col">
+                            <a id="return" class="btn btn-primary text-light w-100 me-3" href="{% url 'index' %}" style="display: inline-block;"> <-Return   </a>
+                        </div>
+                        <div class="col">
+                            <a id="join-btn" class="btn btn-primary text-light w-100">Join <i class="fas fa-phone"></i></a>
+                        </div>
+                    </div>
+                    
+                     
+                </div>
+                
+              </div>
+            {% endif %}
+
+           
+
+              
+           
+        </div>
+<div id="user-streams" ></div>
+        
+
+<div class="form-popup" id="myForm" style="z-index: 4550;">
+            <div class="d-flex">
+                <div class="card  flex-fill " id="chatarea"
+                    style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5)); width: 90%; height: 75vh;">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h5 class="text-light" style="font-size: medium; ">Chat</h5>
+                        <div class="col mx-5">
+                           
+                            <select id="chat_lang" class="redressed">
+
+                                <option value="en-US">English</option>
+                                <option value="fr-FR">French</option>
+                                <option selected value="original" >Original </option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn-close bg-light" onclick="closeForm()" aria-label="Close"></button>
+                    </div>
+        
+                    <div class="card-body  " style="max-height: 60vh;">
+                        <div class="bg-light col-md-12 py-1 mb-2 redressed overflow-auto"  id="text_chat" style="min-height: 55vh; border-radius: 0.3em;
+                        max-height: 60vh; max-width: 50vh;">
+                            <!-- Messages will appear here -->
+                        {% for sms in messages_chat%}
+                        
+
+                         <div style="display: block;">
+
+                         
+                        <div class="text-light bg-dark mt-2 p-2" style="
+                        border: 1px solid white; border-radius: 10px; display: inline-block; max-width: 90%; margin-bottom: 10px;
+                        ">
+                         {{sms.username}} : {{sms.message}}
+                        </div>
+                    </div>
+                        {% endfor %}
+                            
+                        </div>
+        
+                        
+                        
+                        <div class="input-group mb-2 " style="max-width: 50vh;">
+                            
+                            <button id="importButton" class="input-group-text" id="basic-addon1"><i class="fas fa-file-upload"></i></button>
+                            <input type="file" id="fileInput" style="display: none;" />
+                            <input type="text" id="id_message_send_input" class="form-control" placeholder="Message"
+                                aria-label="Message" aria-describedby="basic-addon1">
+
+                                
+                                <button>
+                                    <div class="dropdown redressed">
+                                        <span id="selectedValue" class="input-group-text bg-primary dropdown-toggle text-light" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-language"></i>
+                                        </span>
+                                        <ul id="chantsendlang" class="dropdown-menu">
+                                            <li><a id="optionOriginal" class="dropdown-item" href="#">Original</a></li>
+                                            <li><a id="optionFrench" class="dropdown-item" href="#">fr</a></li>
+                                            <li><a id="optionEnglish" class="dropdown-item" href="#">en</a></li>
+                                        </ul>
+                                    </div>
+                                </button>
+                                
+                            <button id="id_message_send_button" type="submit">
+                                <span class="input-group-text" id="basic-addon1"><i class="fas fa-paper-plane"></i></span>
+                            </button>
+                        </div>
+        
+                        <!--div class="input-group mt-2">
+                            <select id="messageSelect" class="form-control">
+                                <option value="" selected>Choisir un message...</option>
+                            </select>
+                            <button id="editMessageButton" class="btn btn-warning mx-2">
+                                Modifier
+                            </button>
+                            <button id="deleteMessageButton" class="btn btn-danger">
+                                Supprimer
+                            </button>
+                        </div-->
+                    </div>
+                </div>
+            </div>
+</div>
+
+<div class="form-popup" id="createclass" style="z-index: 4550;">
+    <div class="d-flex">
+        <div class="card  flex-fill redressed" id="classarea"
+            style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="text-light" style="font-size: medium; margin: 0;">Salles</h5>
+                <button type="button" class="btn-close bg-light" onclick="closeclass()" aria-label="Close"></button>
+            </div>
+
+            <div class="card-body text-center">
+                <div class="bg-light col-md-12 py-1 mb-2" id="text_class" style="min-height: 30vh;max-width: 40vh; border-radius: 0.3em;">
+                    <!-- Messages will appear here -->
+                    <div class="text-dark my-3">
+                        <h4>Rooms</h4>
+                    </div>
+                    <div class="px-3">
+                        <form id="create_room" method="POST">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="unique_choice" id="choice1" value="automatique" required onclick="toggleInputs()">
+                                        <label class="form-check-label" for="choice1">Automatique</label>
+                                        <div class="input-group mb-3 mt-2" id="participant_input" style="visibility: hidden;">
+                                            <span class="input-group-text" id="basic-addon1">@</span>
+                                            <input type="number" name="participant_par_salle" class="form-control" placeholder="Nombre de participants par salle" aria-label="Username" aria-describedby="basic-addon1" required>
+                                        </div>
+                                    </div>
+            
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="unique_choice" id="choice2" value="manuel" onclick="toggleInputs()">
+                                        <label class="form-check-label" for="choice2">Manuel</label>
+                                        <div class="input-group mb-3  mt-2" id="salle_input" style="visibility: hidden;">
+                                            <span class="input-group-text" id="basic-addon1">@</span>
+                                            <input type="number" name="nombre_de_salle" class="form-control" placeholder="Nombre de Salles" aria-label="Username" aria-describedby="basic-addon1" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+            
+                            <div class="row text-center mt-4">
+                                <div class="col-md-3"></div>
+                                <div class="col"><button type="submit" class="btn btn-primary" style="display: inline-block;">Creer-></button></div>
+                                <div class="col-md-3"></div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+          
+            
+
+        </div>
+    </div>
+</div>
+        
+        
+
+    <div id="bottom-bar" class="card "
+    style="z-index: 100; display: none; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));  border: solid rgb(167, 152, 152) 1px; border-radius: 1em;">
+
+
+    <div class="card-footer  py-2"
+        style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)); border-radius: 1em;">
+        <!--div class="row">
+            <div class="col-md-10">
+                <label for="output">Transcript </label>
+                <h6 class="text-light" id="output"></h6>
+            </div>
+            <div class="col-md-2">
+                <a id="chatbutton_1" href="{% url 'home' %}" target="_blank" class="btn btn-outline-light me-4"
+                    type="button" style="border-radius: 4em; font-size: 1em;">
+                    <i id="chaticon_1" class="fas fa-comment"></i>
+                </a>
+            </div>
+            
+
+        </div-->
+        <div class="row">
+            <div class="col-md-10 text-light redressed">
+                
+                <h6 class="text-light" id="remote_transcript" >
+            </div>
+            
+
+        </div>
+        <div class="row">
+            <div class="d-flex justify-content-center">
+                <div class="btn-group" role="group" aria-label="Basic example">
+
+                    <button id="camera-btn" class="btn btn-outline-light me-2" type="button"
+                        style="border-radius: 4em; font-size: 1em;">
+                        <i id="videoicon" class="fas fa-video"></i>
+                    </button>
+                    <button id="mic-btn" class="btn btn-outline-light me-2" type="button"
+                        style="border-radius: 4em; font-size: 1em;">
+                        <i id="fa-microphone" class="fas fa-microphone"></i>
+                    </button>
+
+                    <button id="screenShareButton" class="btn btn-outline-light me-2" type="button"
+                        style="border-radius: 4em; font-size: 1em;">
+                        <i id="screenShareIcon" class="fas fa-desktop"></i>
+                    </button>
+                    <!--button id="headphonesButton" class="btn btn-outline-light me-2" type="button"
+                        style="border-radius: 4em; font-size: 1em;">
+                        <i id="headphonesIcon" class="fas fa-headphones"></i>
+                    </button-->
+             
+
+                    <div class="dropdown bg-transparent me-2" style="z-index: 1000;">
+                        <a class="btn btn-outline-light dropdown-toggle" href="#" role="button" style="border-radius: 4em; font-size: 1em;" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i id="barsIcon" class="fas fa-bars"></i>
+                        </a>
+                    
+                        <ul class="dropdown-menu text-dark" >
+                            <li><a class="dropdown-item" href="#">Parametres</a></li>
+                            {% if host.username == request.user.username %}
+                            <li><a class="dropdown-item" onclick="openclass()" href="#">Creer une salle</a></li>
+                            {% endif %}
+                    
+                            {% if rooms %}
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text" for="inputGroupSelect01">Salles</label>
+                                </div>
+                                <select class="form-select" id="inputGroupSelect01">
+                                    <option value="{{meeting_id.name}}" selected>Salle 0</option>
+                                    {% for room in rooms %}
+                                    <option value="{{room.name}}">{{room.name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <script>
+                        // Fonction pour récupérer les salles via AJAX
+                        function fetchRooms() {
+                            fetch(`/api/rooms/${channel_name}/`)  // Assure-toi que l'URL '/api/rooms/' retourne la liste des salles au format JSON
+                                .then(response => response.json())
+                                .then(data => {
+                                    const select = document.getElementById('inputGroupSelect01');
+                                    // Efface les anciennes options (sauf la première, "Salle 0")
+                                    select.innerHTML = '<option value="{{meeting_id.name}}" selected>Salle 0</option>';
+                                    
+                                    // Ajoute les nouvelles salles à partir des données récupérées
+                                    data.rooms.forEach(room => {
+                                        const option = document.createElement('option');
+                                        option.value = room.name;
+                                        option.textContent = room.name;
+                                        select.appendChild(option);
+                                    });
+                                })
+                                .catch(error => console.error('Erreur de récupération des salles :', error));
+                        }
+                    
+                        // Rafraîchir toutes les 1 seconde
+                        setInterval(fetchRooms, 1000);
+                    </script>
+
+
+
+                     <!--a id="barButton" onclick="openForm()" class="btn btn-outline-light me-2" type="button"
+                        style="border-radius: 4em; font-size: 1em;">
+                        <i id="barsIcon" class="fas fa-bars"></i>
+                       
+                     </a-->
+                    <button id="handButton" class="btn btn-outline-light me-2" type="button"
+                        style="border-radius: 4em; font-size: 1em;">
+                        <i id="handIcon" class="fas fa-hand-sparkles"></i>
+                    </button>
+
+
+                    <a id="chatbutton"  onclick="openForm()" class="btn btn-outline-light me-4" type="button"
+                        style="border-radius: 4em; font-size: 1em;">
+                        <i id="chaticon" class="fas fa-comment"></i>
+                        <span id="notificationBadge" style="display: none; position: absolute; top: -5px; right: -5px; 
+                                    background-color: red; color: white; border-radius: 50%; padding: 0.2em 0.4em; font-size: 0.7em;">
+                                    M
+                          </span>
+                  </a>
+
+                    <button class="btn btn-success" id="leave-btn" type="button"
+                        style="border-radius: 4em; font-size: 1em;">
+                        <i class="fas fa-phone"></i>
+                    </button>
+
+
+
+
+                </div>
+
+            </div>
+        </div>
+       
+    </div>
+
+
+</div>
+             
+        <!-- Wrapper for join button -->
+<div id="footer">
+            <!--div class="icon-wrapper">
+                <img class="control-icon" id="camera-btn" src="./assets/video.svg" />
+                <p>Cam</p>
+            </div>
+
+            <div class="icon-wrapper">
+                <img class="control-icon" id="mic-btn" src="./assets/microphone.svg" />
+                <p>Mic</p>
+            </div>
+
+            <div class="icon-wrapper">
+                <img class="control-icon" id="leave-btn" src="./assets/leave.svg" />
+                <p>Leave</p>
+            </div-->
+            
+           
+            
+            
+</div>
+
+        <!-- The form -->
+
+    </main>
+
+    <script src="https://cdn.agora.io/sdk/release/AgoraRTC_N.js"></script>
+    <script src=" https://cdn.jsdelivr.net/npm/agora-rtm-sdk@1.5.1/agora-rtm.min.js "></script>
+
+    
+     <script type="text/javascript">
+                 console.log("Bonjour")
+                 const channel_name = document.getElementById('channel_name').innerText.trim().toString();
+                const currentUsername = "{{ request.user.username }}";
+    </script>
+    <script src="{% static 'videoapp/js/video.js' %} "></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+
+
+        <script>
+            function chat_send() {
+                    const userInput = document.getElementById('user_askinput');
+                    const userMessage = userInput.value.trim();
+                    if (!userMessage) return;
+            
+                    // Ajouter le message utilisateur à l'interface
+                    const chatMessages = document.getElementById('chat-messages');
+                    const userMessageDiv = document.createElement('div');
+                    userMessageDiv.className = 'container chat-message user ';
+                    
+                    userMessageDiv.innerHTML = `
+                      <div class=" content merriweather card-header px-3 py-2"
+                          style="display: inline-block; max-width: 80%; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5)); border-radius: 1.5em; border: solid 1px white; word-wrap: break-word; overflow-wrap: break-word;">
+                        <button class="btn btn-outline-light" style="border-radius: 100%; margin-right: 0.5em;">
+                          <i class="fas fa-user"></i>
+                        </button>
+                        ${userMessage}
+                      </div>
+                    `;
+                    //userMessageDiv.textContent = userMessage;
+                    chatMessages.appendChild(userMessageDiv);
+            
+                    // Efface l'entrée utilisateur
+                    userInput.value = '';
+            
+                    // Appel AJAX pour envoyer le message au backend
+                    fetch('/boat/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCsrfToken(),
+                        },
+                        body: JSON.stringify({ message: userMessage })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Ajouter la réponse de l'IA à l'interface
+                        const iaMessageDiv = document.createElement('div');
+                        iaMessageDiv.className = 'chat-message ia container';
+            
+                        iaMessageDiv.innerHTML = `
+                      <div class=" merriweather card-header px-3 py-2"
+                          style="display: inline-block; max-width: 80%; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5)); border-radius: 1.5em; border: solid 1px white; word-wrap: break-word; overflow-wrap: break-word;">
+                        <button class="btn btn-outline-light" style="border-radius: 100%; margin-right: 0.5em;">
+                          <i class="fas fa-brain"></i>
+                        </button>
+                        ${data.response}
+                      </div>
+                    `;
+            
+                        //iaMessageDiv.textContent = data.response;
+                        chatMessages.appendChild(iaMessageDiv);
+            
+                        // Faire défiler vers le bas
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                    });
+                }
+            
+                function handleaskInput(event) {
+                    // Si la touche "Enter" est pressée
+                    if (event.key === "Enter") {
+                        chat_send();
+                    }
+                }
+            
+                function getCsrfToken() {
+                    let cookieValue = null;
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.startsWith('csrftoken=')) {
+                            cookieValue = cookie.substring('csrftoken='.length);
+                            break;
+                        }
+                    }
+                    return cookieValue;
+                }
+            
+                // Ajouter un écouteur pour détecter "Enter" sur l'input utilisateur
+                document.addEventListener("DOMContentLoaded", function() {
+                    const userInput = document.getElementById('user_askinput');
+                    userInput.addEventListener('keypress', handleaskInput);
+                });
+        </script>
+  <script>
+
+const sound = new Audio("{% static 'notification.mp3' %}")
+// Fonction pour ouvrir le modal chatbot
+function openChatbot() {
+    const chatbotModal = new bootstrap.Modal(document.getElementById('chatbot-modal'), {
+        backdrop: false
+    });
+    chatbotModal.show();
+}
+
+// WebSocket configuration
+const roomName = "default_room"; // Vous pouvez personnaliser cela selon votre implémentation
+const chatSocket = new WebSocket(
+    "wss://" + window.location.host + `/ws/${channel_name}/`
+);
+chatSocket.onopen = () => {
+            console.log("The connection was setup successfully!");
+            //chatSocket.send(" envoyé après ouverture");
+          };
+// Gérer les événements WebSocket
+chatSocket.onmessage = async function (e) {
+    const data = JSON.parse(e.data);
+    console.log("Message: ", data)
+    if(data.username !== currentUsername){
+       
+     if (data.message) {
+
+
+    if(data.message.includes("hand")){
+            const handButton = document.getElementById("handButton");
+            const handIcon = document.getElementById("handIcon");
+            const handPopup = document.getElementById("handpopup");
+         if(data.message.includes("up")){
+            handPopup.style.visibility = "visible";
+            handPopup.innerHTML = `<i class="fas fa-hand-point-up"></i>${data.username}`
+         }else if(data.message.includes("down")){
+            handPopup.style.visibility = "hidden"
+         }
+           
+            
+           
+        }else{
+            document.getElementById("notificationBadge").style.display ='block';
+            sound.play();
+            const chatMessages = document.getElementById('text_chat');
+                const chatmess = "";
+                const chatlang = document.getElementById('chat_lang').value
+                console.log('Langue du chat: ', chatlang)
+                
+                if (chatlang !== "original"){
+                    await translateTextchat(data.message, data.username);
+                
+
+                }else {
+                    // Ajouter le message reçu au conteneur
+                    console.log("Message1: ", data)
+                    const newMessage = document.createElement('div');
+                    newMessage.classList.add(' text-light', 'bg-dark', 'mt-2', 'p-2');
+                    newMessage.textContent = `${data.username} : `+ data.message;
+
+                    newMessage.style.border = '1px solid white'; // Bordure blanche
+                    newMessage.style.borderRadius = '10px'; // Coins arrondis
+                    newMessage.style.padding = '10px'; // Espacement interne (au cas où)
+                    newMessage.style.display = 'inline-block';
+                    newMessage.style.marginBottom = '10px';
+                    // Forcer les messages sur des lignes distinctes
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+                    wrapper.appendChild(newMessage);
+
+                    chatMessages.appendChild(wrapper); // Ajouter le conteneur au chat
+
+                }
+            
+        }
+                
+
+                
+                // Faire défiler vers le bas pour afficher le dernier message
+            
+                }else if (data.file_url) {
+                document.getElementById("notificationBadge").style.display ='block';
+                sound.play()
+                const file_message = `
+                    <button id="camera-btn" class="btn btn-outline-dark me-2" type="button"
+                                style="border-radius: 4em; font-size: 1em;">
+                                ${data.username}
+                            </button>  <a href="${data.file_url}" download="${data.file_name}" class="btn btn-primary" style="margin-top: 5px;">
+                    ${data.file_name} <i class="fas fa-download"></i>
+                    </a><br>`;
+                document.getElementById("text_chat").insertAdjacentHTML("beforeend", file_message);
+            };
+        
+
+         
+    
+    }
+};
+
+
+// Fonction de traduction de texte
+
+async function translateTextchatsend(text, chatlang) {
+    try {
+        const subscriptionKey = '6wb4SY1xPaK6f9hTQeXH7j1fQuInvtmszas159jZ06Bv07V2hegVJQQJ99AKACYeBjFXJ3w3AAAAACOGnUa0';
+        const endpoint = 'https://api.cognitive.microsofttranslator.com/';
+        const region = 'eastus';
+        const path = '/translate?api-version=3.0';
+        //const chatlang = document.getElementById('chat_lang').value
+        const url = `${endpoint}${path}&to=${chatlang.split('-')[0]}`;
+        const chatMessages = document.getElementById('text_chat');
+       
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Ocp-Apim-Subscription-Key': subscriptionKey,
+                'Ocp-Apim-Subscription-Region': region,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify([{ 'Text': text }])
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("translate: ",  data[0].translations[0].text)
+            
+            return data[0].translations[0].text;
+        } else {
+            console.error('Erreur de traduction:', response.statusText);
+            return "";
+        }
+    } catch (error) {
+        console.error('Erreur réseau ou autre:', error);
+        return "";
+    }
+}
+
+async function translateTextchat(text, remote_user) {
+    try {
+        const subscriptionKey = '6wb4SY1xPaK6f9hTQeXH7j1fQuInvtmszas159jZ06Bv07V2hegVJQQJ99AKACYeBjFXJ3w3AAAAACOGnUa0';
+        const endpoint = 'https://api.cognitive.microsofttranslator.com/';
+        const region = 'eastus';
+        const path = '/translate?api-version=3.0';
+        const chatlang = document.getElementById('chat_lang').value
+        const url = `${endpoint}${path}&to=${chatlang.split('-')[0]}`;
+        const chatMessages = document.getElementById('text_chat');
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Ocp-Apim-Subscription-Key': subscriptionKey,
+                'Ocp-Apim-Subscription-Region': region,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify([{ 'Text': text }])
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("translate: ",  data[0].translations[0].text)
+            const newMessage = document.createElement('div');
+            newMessage.classList.add('text-light', 'bg-dark', 'mt-2', 'p-2');
+            newMessage.textContent = `${remote_user} : `+ data[0].translations[0].text;
+
+            newMessage.style.border = '1px solid white'; // Bordure blanche
+            newMessage.style.borderRadius = '10px'; // Coins arrondis
+            newMessage.style.padding = '10px'; // Espacement interne (au cas où)
+            newMessage.style.display = 'inline-block';
+            newMessage.style.marginBottom = '10px';
+            // Forcer les messages sur des lignes distinctes
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+            wrapper.appendChild(newMessage);
+
+            chatMessages.appendChild(wrapper);
+
+
+
+            return data[0].translations[0].text;
+        } else {
+            console.error('Erreur de traduction:', response.statusText);
+            return "";
+        }
+    } catch (error) {
+        console.error('Erreur réseau ou autre:', error);
+        return "";
+    }
+}
+chatSocket.onclose = function (e) {
+    console.error('Le socket WebSocket est fermé.');
+};
+
+// Fonction pour envoyer un message
+async function  sendMessage() {
+    console.log("Begin send Message")
+    const userInput = document.getElementById('user-input');
+    //const message = userInput.value.trim();
+    const message1 = document.getElementById('id_message_send_input');
+    let messageInput= message1.value;
+    console.log("Message: ", messageInput, currentUsername)
+    console.log("val: ", document.getElementById("selectedValue").textContent.trim(), messageInput)
+    if (document.getElementById("selectedValue").textContent.trim().length > 0 &&  document.getElementById("selectedValue").textContent.trim() !== 'Original' ){
+       
+            messageInput =  await translateTextchatsend(messageInput, document.getElementById("selectedValue").textContent.trim())
+            }
+    if (messageInput || messageInput.trim() !== "") {
+        console.log("Message: ", messageInput, currentUsername);
+        // Envoyer le message via WebSocket
+        
+        // Ajouter le message utilisateur à l'affichage
+        const chatMessages = document.getElementById('text_chat');
+        const newMessage = document.createElement('div');
+        
+        newMessage.classList.add('text-light', 'bg-dark', 'mb-2', 'p-2', 'ml-2');
+        newMessage.textContent = "Vous: " + messageInput;
+
+        newMessage.style.border = '1px solid white'; // Bordure blanche
+        newMessage.style.borderRadius = '10px'; // Coins arrondis
+        newMessage.style.padding = '10px'; // Espacement interne (au cas où)
+        newMessage.style.display = 'inline-block';
+        newMessage.style.marginBottom = '10px';
+        const divElements = chatMessages.querySelectorAll('div');
+        const numberOfDivs = divElements.length;
+        console.log("Number of div: ",numberOfDivs+1 );
+
+        newMessage.id = `${numberOfDivs + 1}`;
+        // Forcer les messages sur des lignes distinctes
+
+        const editSpan = document.createElement('span');
+        editSpan.textContent = ' ✎'; // Icône ou texte pour modifier
+        editSpan.style.cursor = 'pointer'; // Apparence de clic
+        editSpan.style.marginLeft = '10px'; // Espacement entre le texte et l'icône
+        editSpan.style.color = '#f39c12'; // Couleur du texte
+        editSpan.id = `${numberOfDivs + 1}`;
+
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+        newMessage.appendChild(editSpan);
+        wrapper.appendChild(newMessage);
+
+        chatMessages.appendChild(wrapper); // Ajouter le conteneur au chat
+
+        // Réinitialiser le champ d'entrée
+        message1.value = '';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        chatSocket.send(JSON.stringify({
+            //messageInput
+            //await translateTextchat 
+        
+            message: messageInput, 
+            username: currentUsername,
+            //numberOfDivs: numberOfDivs
+         }));
+
+    }
+}
+
+
+
+// Envoyer un message
+document.getElementById('id_message_send_button').addEventListener('click', () => {
+    console.log("Message")
+    
+    sendMessage();
+});
+ // Ajouter un événement sur la touche 'Enter'
+ document.getElementById('id_message_send_input').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            // Empêcher le comportement par défaut (soumettre un formulaire)
+            event.preventDefault();
+            // Appeler la fonction d'envoi du message
+            sendMessage();
+        }
+    });
+
+function handleUserInput(event) {
+        // Si la touche "Enter" est pressée
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    }
+
+function getCsrfToken() {
+        let cookieValue = null;
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith('csrftoken=')) {
+                cookieValue = cookie.substring('csrftoken='.length);
+                break;
+            }
+        }
+        return cookieValue;
+    }
+
+    // Ajouter un écouteur pour détecter "Enter" sur l'input utilisateur
+document.addEventListener("DOMContentLoaded", function() {
+        const userInput = document.getElementById('user-input');
+        userInput.addEventListener('keypress', handleUserInput);
+    });
+</script>
+
+
+<script>
+    // Sélectionner les éléments
+    const importButton = document.getElementById('importButton');
+    const fileInput = document.getElementById('fileInput');
+    const chatMessages = document.getElementById('text_chat');
+    //const fileActionButtons = document.getElementById('fileActionButtons');
+    const acceptFileButton = document.getElementById('acceptFile');
+    const cancelFileButton = document.getElementById('cancelFile');
+
+    let selectedFile = null; // Variable pour garder le fichier sélectionné
+
+    // Lorsque l'utilisateur clique sur l'icône d'import, ouvrir le sélecteur de fichiers
+    importButton.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    // Lorsque l'utilisateur sélectionne un fichier
+    fileInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            selectedFile = file; // Stocke le fichier sélectionné
+
+            // Afficher les détails du fichier dans la card
+           
+            
+            const file_message = `
+                    <div id="file-message-${file.name}" class="file-message">
+                        <button id="camera-btn" class="btn btn-outline-dark me-1" type="button" style="border-radius: 4em; font-size: 1em;">
+                            ${'Vous'}
+                        </button> 
+                        <a href="${file.file_url}" download="${file.name}" class="btn btn-primary" style="margin-top: 5px;">
+                            ${file.name} <i class="fas fa-download"></i>
+                        </a><br>
+                       
+                    </div>
+                `;
+              document.getElementById("text_chat").insertAdjacentHTML("beforeend", file_message);
+              
+              const Buttonvalid = `
+              <div id="fileActionButtons" >
+                                <button id="acceptFile" class=" btn btn-outline-dark me-1" type="button"
+                               onclick="acceptFile()" style="border-radius: 4em; font-size: 0.5em;"><i class="fas fa-check"></i></button>
+                                <button id="cancelFile" onclick="cancelFile('${file.name}')" class=" btn btn-outline-dark me-2" type="button"
+                                style="border-radius: 4em; font-size: 0.5em;"> X </button>
+                            </div>
+                            `
+            document.getElementById("text_chat").insertAdjacentHTML("beforeend", Buttonvalid);
+
+            //fileActionButtons.style.display = 'block'; // Afficher les boutons pour accepter ou annuler
+          
+          
+        }
+    });
+
+    // Lorsque l'utilisateur clique sur "Accepter", soumettre le fichier
+    //acceptFileButton.addEventListener('click', );
+    function acceptFile() {
+        if (selectedFile) {
+            console.log("Fichier accepté :", selectedFile.name);
+            // Ici, tu peux ajouter le code pour envoyer le fichier au serveur ou effectuer l'action souhaitée
+            //document.getElementById("text_chat").innerHTML = `<strong>Fichier soumis :</strong> ${selectedFile.name}`;
+            fileActionButtons = document.getElementById("fileActionButtons")
+            fileActionButtons.style.display = 'none'; // Masquer les boutons après soumission
+            const fileInput = document.querySelector("#fileInput");
+            const file = fileInput.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                const fileData = e.target.result.split(",")[1]; // Get base64 string
+                chatSocket.send(
+                  JSON.stringify({
+                    file: fileData,
+                    file_name: file.name,
+                    file_type: file.type,
+                    username: currentUsername // Remplacez par votre logique pour le nom d'utilisateur
+                  })
+                );
+              };
+              reader.readAsDataURL(file);
+          
+              // Réinitialiser l'input file et masquer les options
+              fileInput.value = "";
+           
+            }
+            
+        }
+    }
+
+    // Lorsque l'utilisateur clique sur "Annuler", annuler la sélection
+    //cancelFileButton.addEventListener('click', );
+    function cancelFile(fileName) {
+        selectedFile = null;
+            // Sélectionne l'élément avec l'ID correspondant à ce fichier
+        const fileMessageElement = document.getElementById(`file-message-${fileName}`);
+        
+        // Si l'élément existe, supprime-le
+        if (fileMessageElement) {
+            fileMessageElement.remove();
+        }
+        document.getElementById("fileActionButtons").style.display = 'none'; // Masquer les boutons après annulation
+    }
+
+
+
+
+    function closeclass() {
+    document.getElementById("createclass").style.display = "none";
+  }
+
+  function openclass(){
+    document.getElementById("createclass").style.display = "block";
+  }
+
+</script>
+    
+<script>
+    
+
+document.getElementById('create_room').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    closeclass();
+    console.log("url", `/create_room/${channel_name}`)
+    fetch(`/create_room/${channel_name}/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'  // Ajoutez le CSRF token si nécessaire
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            const select = document.getElementById("inputGroupSelect01");
+                const rooms = data.rooms; // La liste des salles renvoyée par la vue Django
+
+                // Vide les options actuelles sauf celle par défaut
+                while (select.options.length > 1) {
+                    select.remove(1); // Supprime tout sauf la première option
+                }
+
+                // Ajouter dynamiquement les options pour chaque salle
+                rooms.forEach(room => {
+                    const option = document.createElement("option");
+                    option.value = room.name; // Assurez-vous que "name" est une clé dans votre queryset values()
+                    option.textContent = room.name;
+                    select.appendChild(option);
+                });
+        } else if (data.error) {
+            alert(data.error);  // Affiche un message d'erreur
+        }
+    })
+    .catch(error => console.error('Erreur:', error));
+});
+
+
+document.getElementById("chantsendlang").addEventListener("click", function(event) {
+    if (event.target.classList.contains("dropdown-item")) {
+        let selectedText = event.target.textContent.trim();
+        if (selectedText !='Original'){
+            document.getElementById("selectedValue").innerHTML = `<i class="fas fa-language"></i>  ${selectedText}`;
+        }else{
+            document.getElementById("selectedValue").innerHTML = `<i class="fas fa-language"></i>`;
+        }
+        console.log('selected Value: ', selectedText)
+       
+       
+    }
+});
+
+
+
+ /* Ajouter un gestionnaire d'événement au <span> pour permettre l'édition
+editSpan.addEventListener('click', () => {
+            const newText = prompt('Modifiez le message :', data.message); // Demander à l'utilisateur le nouveau texte
+            if (newText !== null && newText.trim() !== '') {
+                newMessage.textContent = `${data.username} : ${newText}`;
+                newMessage.appendChild(editSpan); // Réinsérer le <span> après modification
+            }
+});
+*/
+</script>
+
+
+
+<script>
+    // Fonction pour afficher ou masquer les champs d'input en fonction du choix
+    function toggleInputs() {
+        // Récupère les éléments des inputs
+        var salleInput = document.getElementById('salle_input');
+        var participantInput = document.getElementById('participant_input');
+        
+        // Si l'utilisateur choisit "manuel", on rend visible l'input nombre de salles et invisible l'autre
+        if (document.getElementById('choice2').checked) {
+            salleInput.style.visibility = 'visible';
+            participantInput.style.visibility = 'hidden';
+        }
+        // Si l'utilisateur choisit "automatique", on rend visible l'input nombre de participants par salle et invisible l'autre
+        else if (document.getElementById('choice1').checked) {
+            participantInput.style.visibility = 'visible';
+            salleInput.style.visibility = 'hidden';
+        }
+    }
+
+    // Initialiser les inputs comme étant invisibles au chargement de la page
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleInputs(); // Assurez-vous qu'aucun champ n'est visible au début
+    });
+</script>
+</body>
+</html>
