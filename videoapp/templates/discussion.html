@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
     <title>Hello, world!</title>
   </head>
@@ -50,54 +50,121 @@
 
   </style>
   <body style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));" >
-        
+    <p style="display: none;"><a class="card-text" id="discussion_name" >{{discussion.name}}</a></p>
+   
+
     <section class="redressed">
         <div class="container mt-5 text-light">
-            <div class="row d-flex">
-                <!-- Bouton pour afficher/masquer la liste des utilisateurs (mobile only) -->
+            <div class="row">
+                <!-- Bouton pour afficher/masquer la liste des utilisateurs (visible uniquement sur mobile) -->
                 <button class="btn btn-primary d-md-none mb-3" id="toggle-users">
                     ☰ Utilisateurs
                 </button>
     
-                <!-- Sidebar (liste des utilisateurs, visible à gauche, cachée sur mobile) -->
-                <div class="col-lg-3 col-md-3 d-flex flex-column" id="user">
-                    <div class="card bg-transparent " style="height: 90vh; border: solid white 1px; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
-                        <h5 class="card-header text-center">Utilisateurs</h5>
-                        <div class="card-body">
-                            <h5 class="card-title">Liste des connectés</h5>
-
+                <!-- Sidebar utilisateurs -->
+                <div class="col-lg-2 col-md-2 d-none d-md-block" id="user-sidebar">
+                    <div class="card bg-transparent" style="height: 90vh; border: solid white 1px; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
+                        <h5 class="card-header text-center text-primary">Utilisateurs</h5>
+                        <div class="card-body text-light">
+                            <h5 class="card-title">Connectés</h5>
                             <ul id="user-list">
-                                <div class="card-text p-1" style="border: solid 1px white; border-radius: 2em;" > 
-                                    <button  class="btn btn-outline-light me-2" type="button"
-                                    style="border-radius: 4em; font-size: 1em;">
-                                    <i id="user" class="fas fa-user"></i>
-                                </button> {{request.user}}
-                            </div>
+                                <div class="card-text p-1" style="border: solid 1px white; border-radius: 2em;"> 
+                                    <button class="btn btn-outline-light me-1" type="button" style="border-radius: 4em; font-size: 0.5em;">
+                                        <i class="fas fa-user"></i>
+                                    </button> {{ request.user }}
+                                </div>
                             </ul>
-                            
-                           
                         </div>
                     </div>
                 </div>
     
-                <!-- Chat Box (garde toujours une colonne à droite de la liste des utilisateurs) -->
-                <div class="col-lg-9 col-md-9">
-                    <div class="card bg-transparent" style="height: 90vh; border: solid white 1px; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
-                        <h5 class="card-header">
-                            <a href="{% url 'index' %}" class="btn btn-primary"><- Home</a> Chat
-                        </h5>
+                <!-- Zone de chat -->
+                <div class="col-lg-10 col-md-9 col-12">
+                    <div class="form-popup" id="myForm" style="z-index: 4550;">
+                        <div class="d-flex">
+                            <div class="card flex-fill" id="chatarea" style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5)); height: 90vh;">
+                                <div class="card-header d-flex align-items-center justify-content-between text-center">
+                                    <a href="{% url 'index' %}" class="btn btn-danger">← Quitter</a>
+                                    <div class="col text-center text-light">
+                                        {{ discussion.name }}
+                                    </div>
+                                    <div class="col mx-5">
+                                        <select id="chat_lang" class="redressed">
+                                            <option value="en-US">English</option>
+                                            <option value="fr-FR">French</option>
+                                            <option selected value="original">Original</option>
+                                        </select>
+                                    </div>
+                                </div>
     
-                        <!-- Conteneur des messages -->
-                        <div class="card-body" id="chat-box" style="height: 75vh; overflow-y: auto; display: flex; flex-direction: column;">
-                        </div>
+                                <div class="card-body" style="max-height: 85vh;">
+                                    <div class="bg-light py-1 mb-2 redressed overflow-auto" id="text_chat" style="max-height: 90%; border-radius: 0.3em; width: 100%;">
+                                     
+                                            <!-- Messages affichés ici -->
+                                            {% for sms in message_list %}
+                                                {% if sms.username == request.user.username %} 
+                                                    {% if sms.content %}
+                                                        <!-- Message texte de l'utilisateur actuel -->
+                                                        <div class="d-block text-end">
+                                                            <div class="text-light bg-dark mt-2 p-2" style="border: 1px solid white; border-radius: 10px; display: inline-block; max-width: 90%; margin-bottom: 10px;">
+                                                                {{ sms.username }} : {{ sms.content }}
+                                                            </div>
+                                                        </div>
+                                                    {% elif sms.file %}
+                                                        <!-- Fichier envoyé par l'utilisateur actuel -->
+                                                        <div class="d-block text-end">
+                                                            <div class="file-message mt-2">
+                                                                <a href="{{ sms.file }}" download class="btn btn-primary" style="margin-top: 5px;">
+                                                                     {{ sms.file_name  }} <i class="fas fa-download"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% if sms.content %}
+                                                        <!-- Message texte d'un autre utilisateur -->
+                                                        <div class="d-block text-start">
+                                                            <div class="text-light bg-dark mt-2 p-2" style="border: 1px solid white; border-radius: 10px; display: inline-block; max-width: 90%; margin-bottom: 10px;">
+                                                                {{ sms.username }} : {{ sms.content }}
+                                                            </div>
+                                                        </div>
+                                                    {% elif sms.file %}
+                                                        <!-- Fichier envoyé par un autre utilisateur -->
+                                                        <div class="d-block text-start">
+                                                            <div class="file-message mt-2">
+                                                                <a href="{{ sms.file }}" download class="btn btn-primary" style="margin-top: 5px;">
+                                                                     {{ sms.file_name }} <i class="fas fa-download"></i>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                       
+                                        
+                                    </div>
     
-                        <!-- Barre d'envoi de message -->
-                        <div class="card-footer">
-                            <div class="input-group">
-                                <input id="message-input" class="form-control" type="text" placeholder="Écrivez un message..." aria-label="Message">
-                                <button class="btn btn-outline-primary text-light" id="send-button" onclick="sendMessage()">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
+                                    <div class="input-group mb-2">
+                                        <button id="importButton" class="input-group-text"><i class="fas fa-file-upload"></i></button>
+                                        <input type="file" id="fileInput" style="display: none;" />
+                                        <input type="text" id="id_message_send_input" class="form-control" placeholder="Message">
+                                        <button>
+                                            <div class="dropdown redressed">
+                                                <span id="selectedValue" class="input-group-text bg-primary dropdown-toggle text-light" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-language"></i>
+                                                </span>
+                                                <ul id="chantsendlang" class="dropdown-menu">
+                                                    <li><a id="optionOriginal" class="dropdown-item" href="#">Original</a></li>
+                                                    <li><a id="optionFrench" class="dropdown-item" href="#">fr</a></li>
+                                                    <li><a id="optionEnglish" class="dropdown-item" href="#">en</a></li>
+                                                </ul>
+                                            </div>
+                                        </button>
+                                        <button id="id_message_send_button" type="submit">
+                                            <span class="input-group-text"><i class="fas fa-paper-plane"></i></span>
+                                        </button>
+                                    </div>
+                                </div>  
                             </div>
                         </div>
                     </div>
@@ -106,91 +173,471 @@
         </div>    
     </section>
     
+    <!-- JavaScript pour afficher/masquer la sidebar sur mobile -->
     <script>
-        document.getElementById('toggle-users').addEventListener('click', function() {
-            const userList = document.getElementById('user-list');
-            userList.classList.toggle('d-none');
+        document.getElementById("toggle-users").addEventListener("click", function() {
+            const userSidebar = document.getElementById("user-sidebar");
+            userSidebar.classList.toggle("d-none");
         });
     </script>
     
+
+
+    <script type="text/javascript">
+       
+        const discussion_name = document.getElementById('discussion_name').innerText.trim().toString();
+       const currentUsername = "{{ request.user.username }}";
+       console.log("Bonjour: ", currentUsername)
+</script>
+
     
 
-<script>
-    const roomName = "general";  // Remplace par une variable dynamique si nécessaire
+   
+  <script>
+    const discuss_id = "{{discussion.id}}";  // Remplace par une variable dynamique si nécessaire
     const username = "{{ request.user.username }}";  // Assure-toi que l'utilisateur est connecté
-
+  
     const chatSocket = new WebSocket(
-        'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+        'wss://' + window.location.host + '/ws/chat/' + discuss_id + '/'
     );
-
-    chatSocket.onmessage = function(event) {
+  
+    /*chatSocket.onmessage = function(event) {
         const data = JSON.parse(event.data);
         const chatBox = document.getElementById('chat-box');
-
+  
         let messageDiv = document.createElement('div');
         messageDiv.classList.add('message');
-
+  
         if (data.username === username) {
             messageDiv.classList.add('my-message');  // Message à droite
         } else {
             messageDiv.classList.add('remote-message');  // Message à gauche
         }
-
+  
         messageDiv.innerHTML = `<strong>${data.username}:</strong> ${data.message}`;
         chatBox.appendChild(messageDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
     };
+  
+   */
+  
+   chatSocket.onopen = () => {
+            console.log("The connection was setup successfully!");
+            //chatSocket.send(" envoyé après ouverture");
+          };
+// Gérer les événements WebSocket
+   chatSocket.onmessage = async function (e) {
+    const data = JSON.parse(e.data);
+    console.log("Message: ", data)
+    if(data.username !== currentUsername){
+       
+     if (data.message) {
 
-    function sendMessage() {
-        const messageInput = document.getElementById('message-input');
-        const message = messageInput.value;
-        console.log("message: ", message)
-        chatSocket.send(JSON.stringify({
-            'message': message,
-            'username': username
-        }));
 
-        messageInput.value = '';
+    if(data.message.includes("hand")){
+            const handButton = document.getElementById("handButton");
+            const handIcon = document.getElementById("handIcon");
+            const handPopup = document.getElementById("handpopup");
+         if(data.message.includes("up")){
+            handPopup.style.visibility = "visible";
+            handPopup.innerHTML = `<i class="fas fa-hand-point-up"></i>${data.username}`
+         }else if(data.message.includes("down")){
+            handPopup.style.visibility = "hidden"
+         }
+           
+            
+           
+        }else{
+            //document.getElementById("notificationBadge").style.display ='block';
+            //sound.play();
+            const chatMessages = document.getElementById('text_chat');
+                const chatmess = "";
+                const chatlang = document.getElementById('chat_lang').value
+                console.log('Langue du chat: ', chatlang)
+                
+                if (chatlang !== "original"){
+                    await translateTextchat(data.message, data.username);
+                
+
+                }else {
+                    // Ajouter le message reçu au conteneur
+                    console.log("Message1: ", data)
+                    const newMessage = document.createElement('div');
+                    newMessage.classList.add('text-light', 'bg-dark', 'mt-2', 'p-2', "mx-2");
+                    newMessage.textContent = `${data.username} : `+ data.message;
+
+                    newMessage.style.border = '1px solid white'; // Bordure blanche
+                    newMessage.style.borderRadius = '10px'; // Coins arrondis
+                    newMessage.style.padding = '10px'; // Espacement interne (au cas où)
+                    newMessage.style.display = 'inline-block';
+                    newMessage.style.marginBottom = '10px';
+                    // Forcer les messages sur des lignes distinctes
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+                    
+                    wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+                    wrapper.appendChild(newMessage);
+
+                    chatMessages.appendChild(wrapper); // Ajouter le conteneur au chat
+
+                }
+            
+        }
+                
+
+                
+                // Faire défiler vers le bas pour afficher le dernier message
+            
+                }else if (data.file_url) {
+                //document.getElementById("notificationBadge").style.display ='block';
+                //sound.play()
+                const file_message = `
+                    <button id="camera-btn" class="btn btn-outline-dark me-2" type="button"
+                                style="border-radius: 4em; font-size: 1em;">
+                                ${data.username}
+                            </button>  <a href="${data.file_url}" download="${data.file_name}" class="btn btn-primary" style="margin-top: 5px;">
+                    ${data.file_name} <i class="fas fa-download"></i>
+                    </a><br>`;
+                document.getElementById("text_chat").insertAdjacentHTML("beforeend", file_message);
+            };
+        
+
+         
+    
     }
+     };
 
 
-    document.getElementById('message-input').addEventListener('keypress', function(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();  // Empêche le saut de ligne dans l'input
-        sendMessage();
+// Fonction de traduction de texte
+
+async function translateTextchatsend(text, chatlang) {
+    try {
+        const subscriptionKey = '6wb4SY1xPaK6f9hTQeXH7j1fQuInvtmszas159jZ06Bv07V2hegVJQQJ99AKACYeBjFXJ3w3AAAAACOGnUa0';
+        const endpoint = 'https://api.cognitive.microsofttranslator.com/';
+        const region = 'eastus';
+        const path = '/translate?api-version=3.0';
+        //const chatlang = document.getElementById('chat_lang').value
+        const url = `${endpoint}${path}&to=${chatlang.split('-')[0]}`;
+        const chatMessages = document.getElementById('text_chat');
+       
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Ocp-Apim-Subscription-Key': subscriptionKey,
+                'Ocp-Apim-Subscription-Region': region,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify([{ 'Text': text }])
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("translate: ",  data[0].translations[0].text)
+            
+            return data[0].translations[0].text;
+        } else {
+            console.error('Erreur de traduction:', response.statusText);
+            return "";
+        }
+    } catch (error) {
+        console.error('Erreur réseau ou autre:', error);
+        return "";
+    }
+}
+
+async function translateTextchat(text, remote_user) {
+    try {
+        const subscriptionKey = '6wb4SY1xPaK6f9hTQeXH7j1fQuInvtmszas159jZ06Bv07V2hegVJQQJ99AKACYeBjFXJ3w3AAAAACOGnUa0';
+        const endpoint = 'https://api.cognitive.microsofttranslator.com/';
+        const region = 'eastus';
+        const path = '/translate?api-version=3.0';
+        const chatlang = document.getElementById('chat_lang').value
+        const url = `${endpoint}${path}&to=${chatlang.split('-')[0]}`;
+        const chatMessages = document.getElementById('text_chat');
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Ocp-Apim-Subscription-Key': subscriptionKey,
+                'Ocp-Apim-Subscription-Region': region,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify([{ 'Text': text }])
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("translate: ",  data[0].translations[0].text)
+            const newMessage = document.createElement('div');
+            newMessage.classList.add('text-light', 'bg-dark', 'mt-2', 'p-2');
+            newMessage.textContent = `${remote_user} : `+ data[0].translations[0].text;
+
+            newMessage.style.border = '1px solid white'; // Bordure blanche
+            newMessage.style.borderRadius = '10px'; // Coins arrondis
+            newMessage.style.padding = '10px'; // Espacement interne (au cas où)
+            newMessage.style.display = 'inline-block';
+            newMessage.style.marginBottom = '10px';
+            // Forcer les messages sur des lignes distinctes
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+            wrapper.appendChild(newMessage);
+
+            chatMessages.appendChild(wrapper);
+
+
+
+            return data[0].translations[0].text;
+        } else {
+            console.error('Erreur de traduction:', response.statusText);
+            return "";
+        }
+    } catch (error) {
+        console.error('Erreur réseau ou autre:', error);
+        return "";
+    }
+}
+chatSocket.onclose = function (e) {
+    console.error('Le socket WebSocket est fermé.');
+};
+   
+  
+  
+  </script>
+  
+  <script>
+
+
+    // Fonction pour envoyer un message
+  async function  sendMessage() {
+    console.log("Begin send Message")
+    const userInput = document.getElementById('user-input');
+    //const message = userInput.value.trim();
+    const message1 = document.getElementById('id_message_send_input');
+    let messageInput= message1.value;
+    console.log("Message: ", messageInput, currentUsername)
+    console.log("val: ", document.getElementById("selectedValue").textContent.trim(), messageInput)
+    if (document.getElementById("selectedValue").textContent.trim().length > 0 &&  document.getElementById("selectedValue").textContent.trim() !== 'Original' ){
+       
+            messageInput =  await translateTextchatsend(messageInput, document.getElementById("selectedValue").textContent.trim())
+            }
+    if (messageInput || messageInput.trim() !== "") {
+        console.log("Message: ", messageInput, currentUsername);
+        // Envoyer le message via WebSocket
+        
+        // Ajouter le message utilisateur à l'affichage
+        const chatMessages = document.getElementById('text_chat');
+        const newMessage = document.createElement('div');
+        
+        newMessage.classList.add('text-light', 'bg-dark', 'mb-2', 'p-2', 'ml-2');
+        newMessage.textContent =  messageInput;
+  
+        newMessage.style.border = '1px solid white'; // Bordure blanche
+        newMessage.style.borderRadius = '10px'; // Coins arrondis
+        newMessage.style.padding = '10px'; // Espacement interne (au cas où)
+        newMessage.style.display = 'inline-block';
+        newMessage.style.marginBottom = '10px';
+        const divElements = chatMessages.querySelectorAll('div');
+        const numberOfDivs = divElements.length;
+        console.log("Number of div: ",numberOfDivs+1 );
+  
+        newMessage.id = `${numberOfDivs + 1}`;
+        // Forcer les messages sur des lignes distinctes
+  
+        const editSpan = document.createElement('span');
+        editSpan.textContent = ' ✎'; // Icône ou texte pour modifier
+        editSpan.style.cursor = 'pointer'; // Apparence de clic
+        editSpan.style.marginLeft = '10px'; // Espacement entre le texte et l'icône
+        editSpan.style.color = '#f39c12'; // Couleur du texte
+        editSpan.id = `${numberOfDivs + 1}`;
+  
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+        newMessage.appendChild(editSpan);
+        wrapper.classList.add('text-end', 'mx-3', 'my-3')
+        wrapper.appendChild(newMessage);
+  
+        chatMessages.appendChild(wrapper); // Ajouter le conteneur au chat
+  
+        // Réinitialiser le champ d'entrée
+        message1.value = '';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        console.log("Send")
+        chatSocket.send(JSON.stringify({
+            //messageInput
+            //await translateTextchat 
+        
+            message: messageInput, 
+            username: currentUsername,
+            //numberOfDivs: numberOfDivs
+         }));
+  
+    }
+  }
+  
+  // Envoyer un message
+  document.getElementById('id_message_send_button').addEventListener('click', () => {
+    console.log("Message")
+    
+    sendMessage();
+  });
+  
+  document.getElementById('id_message_send_input').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            // Empêcher le comportement par défaut (soumettre un formulaire)
+            event.preventDefault();
+            // Appeler la fonction d'envoi du message
+            sendMessage();
+        }
+    });
+  
+    
+document.getElementById("chantsendlang").addEventListener("click", function(event) {
+    if (event.target.classList.contains("dropdown-item")) {
+        let selectedText = event.target.textContent.trim();
+        if (selectedText !='Original'){
+            document.getElementById("selectedValue").innerHTML = `<i class="fas fa-language"></i>  ${selectedText}`;
+        }else{
+            document.getElementById("selectedValue").innerHTML = `<i class="fas fa-language"></i>`;
+        }
+        console.log('selected Value: ', selectedText)
+       
+       
     }
 });
 
 
-</script>
-
-
-<script>
+  </script>
+ 
+ <script>
     function fetchUsers() {
      // Remplace par la valeur dynamique si nécessaire
-
-    fetch(`/get_active_users/${roomName}/`)  // Appelle la vue Django
+  
+    fetch(`/get_active_users/${discuss_id}/`)  // Appelle la vue Django
+   
         .then(response => response.json())
         .then(data => {
             const userListElement = document.getElementById("user-list");
             userListElement.innerHTML = ""; // Nettoyer la liste
-
+  
             data.users.forEach(username => {
                 const li = document.createElement("li");
-                li.textContent = username;
+                //li.textContent =  username;
+                li.innerHTML = `
+                   <div class="card-text p-1 mb-2" style="border: solid 1px white; border-radius: 2em;" > 
+    <button class="btn btn-outline-light me-1" type="button" style="border-radius: 4em; font-size: 0.5em;">
+                                  
+                                    <i id="user" class="fas fa-user"></i>
+                                </button> ${username}
+                            </div>
+                `;
                 userListElement.appendChild(li);
             });
         })
         .catch(error => console.error("Erreur lors de la récupération des utilisateurs :", error));
+  }
+  
+  // Mettre à jour toutes les secondes
+  setInterval(fetchUsers, 1000);
+  
+  </script>
+<script>
+    // Sélectionner les éléments
+const importButton = document.getElementById("importButton");
+const fileInput = document.getElementById("fileInput");
+const chatMessages = document.getElementById("text_chat");
+
+let selectedFile = null; // Variable pour stocker le fichier sélectionné
+
+// Lorsque l'utilisateur clique sur l'icône d'import, ouvrir le sélecteur de fichiers
+importButton.addEventListener("click", function () {
+  fileInput.click();
+});
+
+// Lorsque l'utilisateur sélectionne un fichier
+fileInput.addEventListener("change", function (event) {
+  const file = event.target.files[0];
+  if (file) {
+    selectedFile = file; // Stocke le fichier sélectionné
+    const fileId = `file-${Date.now()}`; // Génère un ID unique
+
+    // Afficher les détails du fichier dans la card
+    const fileMessage = `
+      <div id="${fileId}" class="text-end mx-2 my-2">
+        <div class="file-message">
+          <a href="#" class="btn btn-primary" style="margin-top: 5px;">
+            ${file.name} <i class="fas fa-download"></i>
+          </a><br>
+        </div>
+        <div class="file-action-buttons">
+          <button class="acceptFile btn btn-outline-dark me-1" style="border-radius: 4em; font-size: 0.8em;">
+            <i class="fas fa-check"></i>
+          </button>
+          <button class="cancelFile btn btn-outline-dark me-2" style="border-radius: 4em; font-size: 0.8em;">
+            X
+          </button>
+        </div>
+      </div>
+    `;
+
+    chatMessages.insertAdjacentHTML("beforeend", fileMessage);
+
+    // Sélectionner les boutons dans le message ajouté
+    const fileElement = document.getElementById(fileId);
+    const acceptFileButton = fileElement.querySelector(".acceptFile");
+    const cancelFileButton = fileElement.querySelector(".cancelFile");
+
+    // Ajouter les événements
+    acceptFileButton.addEventListener("click", function () {
+      acceptFile(fileElement, file);
+    });
+
+    cancelFileButton.addEventListener("click", function () {
+      cancelFile(fileElement);
+    });
+  }
+});
+
+// Lorsque l'utilisateur clique sur "Accepter", envoyer le fichier
+function acceptFile(fileElement, file) {
+  if (file) {
+    console.log("Fichier accepté :", file.name);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const fileData = e.target.result.split(",")[1]; // Get base64 string
+      chatSocket.send(
+        JSON.stringify({
+          file: fileData,
+          file_name: file.name,
+          file_type: file.type,
+          username: currentUsername, // Remplacez par votre logique pour le nom d'utilisateur
+        })
+      );
+    };
+    reader.readAsDataURL(file);
+
+    // Réinitialiser l'input file et masquer les options
+    fileInput.value = "";
+    selectedFile = null;
+    fileElement.querySelector(".file-action-buttons").style.display = "none";
+  }
 }
 
-// Mettre à jour toutes les secondes
-setInterval(fetchUsers, 1000);
+// Lorsque l'utilisateur clique sur "Annuler", retirer l'affichage
+function cancelFile(fileElement) {
+  selectedFile = null;
+  fileElement.remove();
+}
+
+
+
+
+
+
 
 </script>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
     <!-- Option 2: Separate Popper and Bootstrap JS -->
     <!--
@@ -200,7 +647,7 @@ setInterval(fetchUsers, 1000);
 
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
 
   </body>
 </html>

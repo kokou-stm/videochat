@@ -44,7 +44,7 @@ document.getElementById('chat_lang').addEventListener('change', (event) => {
 // ======= Fonction de reconnaissance vocale ========
 
 // WebSocket pour la reconnaissance vocale
-const voiceSocket = new WebSocket("ws://" + window.location.host + "/ws/voice/");
+const voiceSocket = new WebSocket("wss://" + window.location.host + "/ws/voice/");
 console.log("Voice WebSocket: ", voiceSocket);
 
 const startRecognition = () => {

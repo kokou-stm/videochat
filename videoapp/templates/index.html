@@ -271,28 +271,101 @@ https://templatemo.com/tm-569-edu-meeting
 </section>
 <!-- ***** Main Banner Area End ***** -->
 
+<!-- Template Django pour afficher les discussions et le formulaire de recherche -->
+
+
+<style>
+#discussion-container {
+    max-height: 5px; /* Limite la hauteur de la boîte */
+    overflow-y: auto;  /* Ajoute une barre de défilement verticale */
+    border: 1px solid #ddd;  /* Bordure pour délimiter la boîte */
+    padding: 10px;
+    background-color: #f9f9f9;  /* Couleur de fond pour la boîte */
+}
+
+.discussion-item {
+    padding: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 5px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.discussion-item.hidden {
+    display: none;
+}
+.or-separator {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: #555;
+}
+
+.or-separator span {
+    padding: 0 10px;
+    background-color: #f4f4f4;
+    border-radius: 3px;
+}
+
+
+</style>
+
 
 <!-- Modal pour créer une discussion  -->
 <div class="modal fade" id="creatediscussionModal" tabindex="-1" aria-labelledby="creatediscussionModal" aria-hidden="true">
   <div class="modal-dialog">
       <div class="modal-content">
           <div class="modal-header">
-              <h5 class="modal-title redressed" id="creatediscussionModalLabel">Créer une discussion</h5>
+              <h5 class="modal-title redressed" id="creatediscussionModalLabel">Rejoindre ou creer une discussion</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-              <form method="POST" action="{% url 'create_discussion' %}">
-                  {% csrf_token %}
-                  <div class="mb-3">
-                      <label for="name" class="form-label redressed">Nom de la discussion</label>
-                      <input type="text" class="form-control" id="name" name="name" required>
-                  </div>
-                  <div class="mb-3">
-                      <label for="password" class="form-label redressed">Inviter par mail</label>
-                      <input type="email" class="form-control" id="email" name="email" placeholder="examle@dotmail.com" required>
-                  </div>
-                  <button type="submit" class="btn btn-primary">Créer</button>
-              </form>
+            
+
+            <div class="mb-3">
+              <label for="name" class="form-label merriweather">Rechercher une discussion</label>
+              <br>
+              <input type="text" id="search-input" class="redressed" placeholder="Rechercher par nom...">
+          </div>
+          
+          <div class="mb-2">
+             
+              <div id="discussion-container" style="max-height: 100px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                  <ul id="discussion-list">
+                      {% for discussion in discussions %}
+                      <a href="{% url 'discussion' discussion.id %}" class="text-light"><li class="discussion-item merriweather bg-primary ">{{ discussion.name }} </li></a>
+                      {% endfor %}
+                  </ul>
+              </div>
+          </div>
+          
+          <div class="or-separator merriweather ">
+            <span>OU</span>
+          </div>
+          
+
+
+          <form method="POST" action="{% url 'create_discussion' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="name" class="form-label redressed">Nom de la discussion</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3 redressed">
+                <label for="email" class="form-label ">Inviter par mail</label>
+                <input type="text" class="form-control" id="email" name="email" placeholder="exemple@domain.com + 'Entrez' "  required>
+                <div id="email-list" class="mt-2"></div> <!-- Zone pour afficher les emails sous forme de bulles -->
+                <input type="hidden" name="emails" id="emails">
+            </div>
+            <div class="text-end redressed">
+                <button type="submit" class="btn btn-primary">Créer -></button>
+            </div>
+        </form>
+        
+        
+              
+             
           </div>
       </div>
   </div>
@@ -368,8 +441,10 @@ https://templatemo.com/tm-569-edu-meeting
           </div>
 
           <div id="emailError" class="text-danger" style="display:none;">Veuillez entrer des e-mails valides séparés par des virgules.</div>
-
-          <button type="submit" class="btn btn-primary">Créer</button>
+         <div class="text-end">
+          <button type="submit" class="btn btn-primary">Planifier</button>
+         </div>
+        
         </form>
       </div>
     </div>
@@ -409,7 +484,7 @@ https://templatemo.com/tm-569-edu-meeting
 
 <!-- Modal pour rejoindre une réunion -->
 <div class="modal fade" id="joinMeetingModal" tabindex="-1" aria-labelledby="joinMeetingModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog redressed">
       <div class="modal-content">
           <div class="modal-header">
               <h5 class="modal-title" id="joinMeetingModalLabel">Rejoindre une Réunion</h5>
@@ -426,7 +501,10 @@ https://templatemo.com/tm-569-edu-meeting
                       <label for="password" class="form-label">Mot de passe</label>
                       <input type="password" class="form-control" id="password" name="password" required>
                   </div>
-                  <button type="submit" class="btn btn-secondary">Rejoindre</button>
+                  <div class="text-end">
+                    <button type="submit" class="btn btn-secondary">Rejoindre</button>
+                  </div>
+                  
               </form>
           </div>
       </div>
@@ -1103,6 +1181,86 @@ https://templatemo.com/tm-569-edu-meeting
 
     <script src="{% static 'videoapp/assets/js/slick-slider.js' %}"></script>
     <script src="{% static 'videoapp/assets/js/custom.js' %}"></script>
+<!-- Inclure jQuery (si ce n'est pas déjà fait) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Lorsque l'utilisateur tape dans le champ de recherche
+        $('#search-input').on('input', function() {
+            var searchValue = $(this).val().toLowerCase(); // Récupérer la valeur du champ de recherche et la convertir en minuscule
+
+            // Parcourir toutes les discussions
+            $('#discussion-list .discussion-item').each(function() {
+                var discussionName = $(this).text().toLowerCase(); // Récupérer le nom de la discussion
+
+                // Vérifier si le nom de la discussion contient la valeur de recherche
+                if (discussionName.indexOf(searchValue) !== -1) {
+                    $(this).removeClass('hidden'); // Afficher l'élément
+                } else {
+                    $(this).addClass('hidden'); // Cacher l'élément
+                }
+            });
+        });
+    });
+</script>
+<script>
+  $(document).ready(function() {
+      const emailInput = $('#email');
+      const emailList = $('#email-list');
+      const emailsInput = $('#emails');
+
+      // Fonction pour ajouter un email sous forme de bulle
+      function addEmailToList(email) {
+          const emailBubble = $('<span class="badge bg-primary text-light me-2 mb-2 email-bubble">')
+              .text(email)
+              .append('<span class="ms-2 remove-email" style="cursor:pointer;">&times;</span>');
+          emailList.append(emailBubble);
+          updateHiddenEmails(); // Mise à jour de l'input caché avec tous les emails
+
+          // Supprimer l'email en cliquant sur la croix
+          emailBubble.find('.remove-email').on('click', function() {
+              emailBubble.remove();
+              updateHiddenEmails();
+          });
+      }
+
+      // Mettre à jour l'input caché pour soumettre tous les emails
+      function updateHiddenEmails() {
+          const emailArray = [];
+          $('.email-bubble').each(function() {
+              emailArray.push($(this).text().replace('×', '').trim());
+          });
+          emailsInput.val(emailArray.join(',')); // Mettre tous les emails dans l'input caché, séparés par des virgules
+      }
+
+      // Ajouter un email au bouton "Entrée" (validation de l'email)
+      emailInput.on('keydown', function(e) {
+          if (e.key === 'Enter' && emailInput.val() !== '') {
+              const email = emailInput.val().trim();
+              const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Validation basique de l'email
+              if (emailPattern.test(email)) {
+                  addEmailToList(email); // Ajouter à la liste
+                  emailInput.val(''); // Réinitialiser le champ
+              } else {
+                  alert("Veuillez entrer un email valide.");
+              }
+          }
+      });
+
+      // Ajouter un email en cliquant sur un bouton (optionnel)
+      $('#add-email-btn').on('click', function() {
+          const email = emailInput.val().trim();
+          const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (emailPattern.test(email)) {
+              addEmailToList(email);
+              emailInput.val('');
+          } else {
+              alert("Veuillez entrer un email valide.");
+          }
+      });
+  });
+</script>
 
 
     <script>

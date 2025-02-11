@@ -19,6 +19,7 @@ class Meeting(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # Date de création
     users = models.ManyToManyField(User, related_name='channels')
     host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hosted_meeting', null=True, blank=True) 
+    host_users = models.ManyToManyField(User, related_name='hosted_users', blank=True) 
     def __str__(self):
         return self.name
 
@@ -73,3 +74,31 @@ class ActiveUser(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ({self.room_name})"
+    
+
+
+from django.db import models
+from django.contrib.auth.models import User
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class Discussion(models.Model):
+    name = models.CharField(max_length=255)
+    users = models.ManyToManyField(User, related_name='active_discussions', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+class DiscussionMessage(models.Model):
+    discussion = models.ForeignKey(Discussion, related_name='messages', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Utilisateur qui a envoyé le message
+    content = models.TextField(blank=True, null=True)  # Message texte
+    file = models.FileField(upload_to="uploads/", blank=True, null=True)  # Fichier
+    created_at = models.DateTimeField(auto_now_add=True)  # Date et heure de création
+
+    def __str__(self):
+        return f"Message from {self.user.username} at {self.created_at}"
+

@@ -98,8 +98,10 @@ def generate_agora_token(request, channel_name):
 
 @login_required
 def index(request):
-    return render(request, "index.html")
-
+    discussions = Discussion.objects.all()
+    print("Discu: ", discussions)
+    return render(request, "index.html", {"discussions": discussions})
+   
 
 
 from django.shortcuts import render, redirect
@@ -569,10 +571,13 @@ def create_meeting(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         password = request.POST.get('password')
-        date = request.POST.get('date')
-        time = request.POST.get('time')
+        
         emails =  request.POST.get('email')
         emails = [i for i in emails.split(",")]
+
+        date = request.POST.get('date')
+        time = request.POST.get('time')
+         
         if date:
             emails.append(request.user.email)
         print('emails: ', emails)
@@ -586,7 +591,7 @@ def create_meeting(request):
             meeting.save()
 
         Subject = "Invitation pour reunion"
-        heure = date
+        heure = f"{date} {time}"
         if not heure:
             heure =""
         html = f"""
@@ -646,7 +651,7 @@ def create_meeting(request):
                 <h1>Invitation à une Réunion VideoCall</h1>
                 <div class="content">
                     <p>Bonjour,</p>
-                    <p>Vous êtes invité(e) à rejoindre une réunion sur <strong>VideoCall</strong>.</p>
+                    <p>{request.user.username }Vous invité(e) à rejoindre prochainement la réunion {meeting.name} sur <strong>VideoCall</strong>.</p>
                     <p>Pour rejoindre la réunion, cliquez simplement sur le bouton ci-dessous à {heure}</p>
                     <a href="https://www.videocall.com/reunion/123456" class="button">Rejoindre la Réunion</a>
                     <p>{current_host}/home/{meeting.id}/</p>
@@ -664,8 +669,8 @@ def create_meeting(request):
         if date:
             meeting.created_at = date
             meeting.save()
-            messages.info(request, f"Reunion planifie pour {date}, nous vous avons envoyé le lien à votre adresse mail {request.user.email} ")
-            return render(request, 'create_meeting.html') 
+            messages.info(request, f"Reunion planifie pour {date}, nous vous avons envoyé le lien à votre adresse mail {request.user.email} ansi qu'a tous les invités")
+            return render(request, 'index.html') 
         return redirect('home', meeting_id=meeting.id)
         #return redirect('join_meeting', meeting_id=meeting.id)
     return render(request, 'create_meeting.html')
@@ -685,13 +690,61 @@ def home(request, meeting_id=None):
             messages_chat = []
 
         initial = request.user.username[:2].upper()
+        host_users = meeting.host_users.all()
+        list_users = meeting.users.all()
+        
         if request.user.first_name and request.user.last_name: 
             initial = request.user.first_name[0] + request.user.last_name[0]
             print("Initial: ", initial)
-        context = {"meeting_id": meeting, "rooms": rooms, "host": meeting.host, 'messages_chat': messages_chat, "initial": initial} 
+       
+        context = {"meeting_id": meeting, "rooms": rooms, "host": meeting.host, "host_users":host_users, 'messages_chat': messages_chat, "initial": initial, "list_users": list_users} 
         return render(request, "home.html", context)
+
     
     return render(request, "home.html")
+
+
+
+def co_admin(request, id_user, meeting_id):
+    if request.method == 'POST' and id_user:
+        try:
+            add_user = User.objects.get(id=id_user)  # Récupère l'utilisateur à ajouter
+            print('Meet', "=="*10, meeting_id)
+            meeting = Meeting.objects.get(id=meeting_id)  # Récupère la réunion
+            print('Meet', "=="*5, meeting)
+            meeting.host_users.add(add_user)  # Ajoute l'utilisateur comme co-hôte
+            meeting.save()
+            return JsonResponse({'success': True, 'message': 'Utilisateur ajouté comme co-hôte.'})
+        except User.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Utilisateur non trouvé.'}, status=404)
+        except Meeting.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Réunion non trouvée.'}, status=404)
+    return JsonResponse({'success': False, 'message': 'Méthode non autorisée.'}, status=405)
+
+def retirer_co_admin(request, id_user, meeting_id):
+    if request.method == 'POST' and id_user:
+        try:
+            remove_user = User.objects.get(id=id_user)  # Récupère l'utilisateur à retirer
+            meeting = Meeting.objects.get(id=meeting_id)  # Récupère la réunion
+            meeting.host_users.remove(remove_user)  # Retire l'utilisateur des co-hôtes
+            meeting.save()
+            return JsonResponse({'success': True, 'message': 'Utilisateur retiré des co-hôtes.'})
+        except User.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Utilisateur non trouvé.'}, status=404)
+        except Meeting.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Réunion non trouvée.'}, status=404)
+    return JsonResponse({'success': False, 'message': 'Méthode non autorisée.'}, status=405)
+
+
+def check_if_host(request, meeting_id):
+    try:
+        meeting = Meeting.objects.get(id=meeting_id)
+        # Vérifie si l'utilisateur courant est un co-hôte
+        is_host = meeting.host_users.filter(id=request.user.id).exists()
+        return JsonResponse({'is_host': is_host})
+    except Meeting.DoesNotExist:
+        return JsonResponse({'error': 'Réunion non trouvée.'}, status=404)
+    
 
 def join_meeting(request):
 
@@ -718,9 +771,143 @@ def join_meeting(request):
 
 def create_discussion(request):
     if request.method == 'POST':
+        emails = request.POST.get('emails')  # Récupérer la chaîne des emails
         email = request.POST.get('email')
         name = request.POST.get('name')
-    return render(request, "discussion.html")
+        print("==="*5, emails, name)
+        print("==="*5, email)
+
+        
+        email_list = [email.strip() for email in emails.split(',') if email.strip()]
+        
+    
+        invalid_emails = []
+        for email in email_list:
+            if not validate_email(email):
+                invalid_emails.append(email)
+        
+        if invalid_emails:
+            print(f"Les emails invalides sont : {', '.join(invalid_emails)}")
+        try: 
+            # Créer la discussion dans la base de données
+            discussion = Discussion.objects.create(name=name, created_by=request.user)
+
+            current_host = request.META["HTTP_HOST"]
+            Subject = "Invitation à une discussion"
+            
+          
+
+            html = f"""
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Invitation à une réunion VideoCall</title>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f4f4f4;
+                    }}
+                    .email-container {{
+                        background-color: #ffffff;
+                        max-width: 600px;
+                        margin: 20px auto;
+                        padding: 20px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                    }}
+                    h1 {{
+                        color: #007bff;
+                        text-align: center;
+                        margin-bottom: 20px;
+                    }}
+                    .content {{
+                        font-size: 16px;
+                        color: #333333;
+                        margin-bottom: 20px;
+                    }}
+                    .button {{
+                        display: inline-block;
+                        background-color: #007bff;
+                        color: white;
+                        padding: 12px 25px;
+                        border-radius: 5px;
+                        text-decoration: none;
+                        font-size: 16px;
+                        text-align: center;
+                        margin-top: 20px;
+                    }}
+                    .button:hover {{
+                        background-color: #0056b3;
+                    }}
+                    .footer {{
+                        font-size: 14px;
+                        color: #777777;
+                        text-align: center;
+                        margin-top: 30px;
+                    }}
+                    .footer a {{
+                        color: #007bff;
+                        text-decoration: none;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="email-container">
+                    <h1>Invitation à une Réunion VideoCall</h1>
+                    <div class="content">
+                        <p>Bonjour,</p>
+                        <p><strong>{request.user}</strong> vous invite à rejoindre la discussion <strong>{discussion.name}</strong> sur <strong>VideoCall</strong>.</p>
+                        <p>Pour rejoindre la réunion, veuillez cliquer sur le bouton ci-dessous :</p>
+                        <a href="https://www.videocall.com/reunion/123456" class="button">Rejoindre la Discussion</a>
+                        <p>Si le lien ne fonctionne pas, copiez et collez l'adresse suivante dans votre navigateur :</p>
+                        <p><a href="https://www.videocall.com/reunion/123456" style="color: #007bff;">https://www.videocall.com/reunion/123456</a></p>
+                        <p>{current_host}/home/{discussion.id}/</p>
+                    </div>
+                    <div class="footer">
+                        <p>Nous avons hâte de vous retrouver sur VideoCall.</p>
+                        <p>Si vous avez des questions, n'hésitez pas à <a href="mailto:support@videocall.com">nous contacter</a>.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            group_emailsender(Subject,html, email_list )
+            return redirect('discussion', id=discussion.id)
+        except:
+            discussions = Discussion.objects.all()
+            messages.info(request, "Erreur lors de la creation du chat, veuillez nommer differement la discussion et ressayer")
+            return render(request, "index.html", {"discussions": discussions})
+
+       
+
+        #dis, create = Discussion.objects.get_or_create()
+    return render(request, "index.html")
+
+def joindre_discussion(request, id=None):
+    discussion, created = Discussion.objects.get_or_create(id=id)
+    
+    # Récupérer tous les messages de la discussion
+    discuss_messages = DiscussionMessage.objects.filter(discussion=discussion).order_by("created_at")
+    
+    # Construire la liste des messages à envoyer au template
+    message_list = [
+        {
+            "username": msg.user.username,
+            "file": msg.file if msg.file else None,
+            "content": msg.content,
+            "created_at": msg.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "file_name": os.path.basename(msg.file.name) if msg.file else None,
+        }
+        for msg in discuss_messages if msg.content != None or msg.file != None
+    ]
+    print("List: ", message_list )
+    return render(request, "discussion.html", {"discussion": discussion, "message_list": message_list})
+
 
 def update_message(request):
     if request.method == 'POST':
@@ -743,15 +930,20 @@ from django.contrib.auth.decorators import login_required
 from .models import ActiveUser  # Assurez-vous d'avoir ce modèle qui stocke les utilisateurs actifs
 
 @login_required
-def get_active_users(request, room_name):
-    users = ActiveUser.objects.filter(room_name=room_name)
-    
-    #print("user: ", users)
-    #user_list = [user.user.username for user in users]
-    #print("user: ", users, room_name)
-    return JsonResponse({'users': "users"})
+def get_active_users(request, discuss_id):
+    discussion = Discussion.objects.get(id=discuss_id)
+    user_list = [user.username for user in discussion.users.all()]
+    return JsonResponse({'users': user_list})
 
-from .forms import *
+@login_required
+def get_messages(request, discuss_id):
+    discuss = Discussion.objects.get(id=discuss_id)
+    discuss_messages = Discussion.objects.filter(discussion= discuss)
+    message_list = [[discuss_mes.user, discuss_mes.file,  discuss_mes.file, discuss_mes.content]  for discuss_mes in discuss_messages]
+    return JsonResponse({'users': message_list})
+
+
+
 
 '''def create_room(request):
     if request.method == 'POST':
@@ -768,75 +960,69 @@ from .forms import *
 
 
 
-@csrf_exempt  # Permet des tests sans token CSRF (désactiver en production si non nécessaire)
+from django.contrib import messages
+from django.http import JsonResponse
+
+def get_django_messages(request):
+    """ Récupère les messages Django et les formate en liste """
+    return [msg.message for msg in messages.get_messages(request)]
+
+@csrf_exempt
 def create_room(request, channel_name):
     if request.method == 'POST':
-        print("Create Room ", channel_name )
         meeting = Meeting.objects.get(name=channel_name)
-        selected_choice = request.POST.get('unique_choice')  # Récupère la valeur choisie
-        print('select_c')
-        # Récupère la valeur choisie
-        if selected_choice =='manuel':
-            
-            # Compte les salles liées à ce canal
+        selected_choice = request.POST.get('unique_choice')
+
+        if selected_choice == 'manuel':
             room_count = Rooms.objects.filter(channel=meeting).count()
             nombre_de_salle = int(request.POST.get('nombre_de_salle'))
-            print("roomcounr: ", room_count)
-                # Génère le nom de la nouvelle salle
-            for manual_room in range(1, nombre_de_salle+1):
-                room_name = f"{meeting.name}_salle{room_count + manual_room }"
-                roomadd = Rooms.objects.create(
-                    name=room_name,
-                    host= request.user,
-                    channel=meeting, 
-                    
-                )
+
+            for manual_room in range(1, nombre_de_salle + 1):
+                room_name = f"{meeting.name}_salle{room_count + manual_room}"
+                roomadd = Rooms.objects.create(name=room_name, host=request.user, channel=meeting)
                 roomadd.users.add(request.user)
                 roomadd.save()
+
             rooms = Rooms.objects.filter(channel=meeting).values()
+            messages.success(request, "Les salles ont été ajoutées. Vous les trouverez dans la liste des salles.")
+
             return JsonResponse({
                 'message': 'Choix soumis avec succès.',
                 'selected_choice': selected_choice,
-                 'rooms': list(rooms),
+                'rooms': list(rooms),
+                'django_messages': get_django_messages(request)  # Ajout des messages dans la réponse JSON
             })
-        elif selected_choice =='automatique':
-             select_user= 0
-             participant_par_salle = int(request.POST.get('participant_par_salle'))
-             liste_users = [user_name for  user_name in meeting.users.all()] 
-             num_salles = (len(liste_users))//participant_par_salle
-             if ((len(liste_users))%participant_par_salle) != 0:
-                  num_salles +=1
-             room_count = Rooms.objects.filter(channel=meeting).count()
-             print("roomcounr: ", room_count, liste_users, num_salles)
-                # Génère le nom de la nouvelle salle
-             for i_room in range(1, num_salles+1):
-                print("val: ", i_room)
+
+        elif selected_choice == 'automatique':
+            participant_par_salle = int(request.POST.get('participant_par_salle'))
+            liste_users = list(meeting.users.all())
+            num_salles = -(-len(liste_users) // participant_par_salle)  # Arrondi supérieur
+            room_count = Rooms.objects.filter(channel=meeting).count()
+
+            for i_room in range(1, num_salles + 1):
                 room_name = f"{meeting.name}_salle{room_count + i_room}"
-                print("val: ", room_name)
-                
-                roomadd = Rooms.objects.create(
-                    name=room_name,
-                    host= request.user,
-                    channel=meeting,    
-                )
+                roomadd = Rooms.objects.create(name=room_name, host=request.user, channel=meeting)
+
                 try:
-                    roomadd.users.add(*liste_users[:participant_par_salle+1])
-                    liste_users = liste_users[participant_par_salle+1:]
-                    roomadd.save()
+                    roomadd.users.add(*liste_users[:participant_par_salle])
+                    liste_users = liste_users[participant_par_salle:]
                 except:
-                    roomadd.users.add(*liste_users[:])
-                    
-                    roomadd.save()
-             rooms = Rooms.objects.filter(channel=meeting).values()
-             print("rooms: ", rooms)
-             return JsonResponse({
+                    roomadd.users.add(*liste_users)
+
+                roomadd.save()
+
+            rooms = Rooms.objects.filter(channel=meeting).values()
+            messages.success(request, "Les salles ont été ajoutées. Vous les trouverez dans la liste des salles.")
+
+            return JsonResponse({
                 'message': 'Choix soumis avec succès.',
                 'selected_choice': selected_choice,
                 'rooms': list(rooms),
+                'django_messages': get_django_messages(request)  # Ajout des messages dans la réponse JSON
             })
-            
-            
+
         return JsonResponse({'error': 'Aucun choix sélectionné.'}, status=400)
+
     return JsonResponse({'error': 'Méthode non autorisée.'}, status=405)
 
 from django.http import JsonResponse

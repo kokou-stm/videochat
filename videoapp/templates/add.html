@@ -1,4 +1,7 @@
 {% if rooms %}
+
+  
+</div>
   <div class="input-group mb-3">
     <div class="input-group-prepend">
       <label class="input-group-text" for="inputGroupSelect01">Salles</label>
@@ -11,3 +14,154 @@
     </select>
   </div>
 {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+<script>
+  const roomName = "general";  // Remplace par une variable dynamique si nécessaire
+  const username = "{{ request.user.username }}";  // Assure-toi que l'utilisateur est connecté
+
+  const chatSocket = new WebSocket(
+      'wss://' + window.location.host + '/ws/chat/' + roomName + '/'
+  );
+
+  chatSocket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      const chatBox = document.getElementById('chat-box');
+
+      let messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+
+      if (data.username === username) {
+          messageDiv.classList.add('my-message');  // Message à droite
+      } else {
+          messageDiv.classList.add('remote-message');  // Message à gauche
+      }
+
+      messageDiv.innerHTML = `<strong>${data.username}:</strong> ${data.message}`;
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+  };
+
+  function sendMessage() {
+      const messageInput = document.getElementById('message-input');
+      const message = messageInput.value;
+      console.log("message: ", message)
+      chatSocket.send(JSON.stringify({
+          'message': message,
+          'username': username
+      }));
+
+      messageInput.value = '';
+  }
+
+
+  document.getElementById('message-input').addEventListener('keypress', function(event) {
+  if (event.key === 'Enter') {
+      event.preventDefault();  // Empêche le saut de ligne dans l'input
+      sendMessage();
+  }
+});
+
+
+</script>
+
+<script>
+  // Fonction pour envoyer un message
+async function  sendMessage() {
+  console.log("Begin send Message")
+  const userInput = document.getElementById('user-input');
+  //const message = userInput.value.trim();
+  const message1 = document.getElementById('id_message_send_input');
+  let messageInput= message1.value;
+  console.log("Message: ", messageInput, currentUsername)
+  console.log("val: ", document.getElementById("selectedValue").textContent.trim(), messageInput)
+  if (document.getElementById("selectedValue").textContent.trim().length > 0 &&  document.getElementById("selectedValue").textContent.trim() !== 'Original' ){
+     
+          messageInput =  await translateTextchatsend(messageInput, document.getElementById("selectedValue").textContent.trim())
+          }
+  if (messageInput || messageInput.trim() !== "") {
+      console.log("Message: ", messageInput, currentUsername);
+      // Envoyer le message via WebSocket
+      
+      // Ajouter le message utilisateur à l'affichage
+      const chatMessages = document.getElementById('text_chat');
+      const newMessage = document.createElement('div');
+      
+      newMessage.classList.add('text-light', 'bg-dark', 'mb-2', 'p-2', 'ml-2');
+      newMessage.textContent = "Vous: " + messageInput;
+
+      newMessage.style.border = '1px solid white'; // Bordure blanche
+      newMessage.style.borderRadius = '10px'; // Coins arrondis
+      newMessage.style.padding = '10px'; // Espacement interne (au cas où)
+      newMessage.style.display = 'inline-block';
+      newMessage.style.marginBottom = '10px';
+      const divElements = chatMessages.querySelectorAll('div');
+      const numberOfDivs = divElements.length;
+      console.log("Number of div: ",numberOfDivs+1 );
+
+      newMessage.id = `${numberOfDivs + 1}`;
+      // Forcer les messages sur des lignes distinctes
+
+      const editSpan = document.createElement('span');
+      editSpan.textContent = ' ✎'; // Icône ou texte pour modifier
+      editSpan.style.cursor = 'pointer'; // Apparence de clic
+      editSpan.style.marginLeft = '10px'; // Espacement entre le texte et l'icône
+      editSpan.style.color = '#f39c12'; // Couleur du texte
+      editSpan.id = `${numberOfDivs + 1}`;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+      newMessage.appendChild(editSpan);
+      wrapper.appendChild(newMessage);
+
+      chatMessages.appendChild(wrapper); // Ajouter le conteneur au chat
+
+      // Réinitialiser le champ d'entrée
+      message1.value = '';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      chatSocket.send(JSON.stringify({
+          //messageInput
+          //await translateTextchat 
+      
+          message: messageInput, 
+          username: currentUsername,
+          //numberOfDivs: numberOfDivs
+       }));
+
+  }
+}
+
+// Envoyer un message
+document.getElementById('id_message_send_button').addEventListener('click', () => {
+  console.log("Message")
+  
+  sendMessage();
+});
+
+document.getElementById('id_message_send_input').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+          // Empêcher le comportement par défaut (soumettre un formulaire)
+          event.preventDefault();
+          // Appeler la fonction d'envoi du message
+          sendMessage();
+      }
+  });
+
+</script>

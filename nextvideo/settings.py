@@ -134,14 +134,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'videoapp/static/'
+STATIC_URL = '/static/'
 
 # The absolute path to the directory where collectstatic will collect static files for deployment.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Additional locations the staticfiles app will traverse if the FileSystemFinder finder is enabled.
 STATICFILES_DIRS = [
-    BASE_DIR / "videoapp/static",
+    BASE_DIR / "static",
 ]
 
 MEDIA_URL = '/media/'

@@ -237,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // WebSocket pour la reconnaissance vocale
-const voiceSocket = new WebSocket("ws://" + window.location.host + "/ws/voice/");
+const voiceSocket = new WebSocket("wss://" + window.location.host + "/ws/voice/");
 console.log("Voice WebSocket: ", voiceSocket);
 
 voiceSocket.onmessage = async function (e) {
@@ -573,7 +573,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           
           // Gestion de la connexion WebSocket
-          const chatSocket = new WebSocket("ws://" + window.location.host + "/");
+          const chatSocket = new WebSocket("wss://" + window.location.host + "/");
           console.log("Host:", chatSocket);
           
           chatSocket.onopen = () => {

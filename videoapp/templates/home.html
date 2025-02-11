@@ -174,6 +174,12 @@
 <div id="join-wrapper">
             
             {% if meeting_id %}
+ 
+
+          
+           
+ 
+
             <div class="card text-center bg-transparent" style="border: solid 1px white; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
                 <div class="card-header text-light redressed" id="reunio_titre">
                  Details de la Reunion
@@ -201,6 +207,8 @@
                 </div>
                 
               </div>
+
+           
             {% endif %}
 
            
@@ -306,38 +314,40 @@
                 <div class="bg-light col-md-12 py-1 mb-2" id="text_class" style="min-height: 30vh;max-width: 40vh; border-radius: 0.3em;">
                     <!-- Messages will appear here -->
                     <div class="text-dark my-3">
-                        <h4>Rooms</h4>
+                        <h4>Creer des salles</h4>
                     </div>
                     <div class="px-3">
                         <form id="create_room" method="POST">
+                            {% csrf_token %}
                             <div class="mb-3">
                                 <div class="form-check">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="unique_choice" id="choice1" value="automatique" required onclick="toggleInputs()">
-                                        <label class="form-check-label" for="choice1">Automatique</label>
-                                        <div class="input-group mb-3 mt-2" id="participant_input" style="visibility: hidden;">
-                                            <span class="input-group-text" id="basic-addon1">@</span>
-                                            <input type="number" name="participant_par_salle" class="form-control" placeholder="Nombre de participants par salle" aria-label="Username" aria-describedby="basic-addon1" required>
-                                        </div>
+                                    <input class="form-check-input" type="radio" name="unique_choice" id="choice1" value="automatique" required onclick="toggleInputs()">
+                                    <label class="form-check-label" for="choice1">Automatique</label>
+                                    <div class="input-group mb-3 mt-2" id="participant_input" style="visibility: hidden;">
+                                        <span class="input-group-text">@</span>
+                                        <input type="number" name="participant_par_salle" class="form-control" placeholder="Participants par salle" required>
                                     </div>
-            
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="unique_choice" id="choice2" value="manuel" onclick="toggleInputs()">
-                                        <label class="form-check-label" for="choice2">Manuel</label>
-                                        <div class="input-group mb-3  mt-2" id="salle_input" style="visibility: hidden;">
-                                            <span class="input-group-text" id="basic-addon1">@</span>
-                                            <input type="number" name="nombre_de_salle" class="form-control" placeholder="Nombre de Salles" aria-label="Username" aria-describedby="basic-addon1" required>
-                                        </div>
+                                </div>
+                        
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="unique_choice" id="choice2" value="manuel" onclick="toggleInputs()">
+                                    <label class="form-check-label" for="choice2">Manuel</label>
+                                    <div class="input-group mb-3 mt-2" id="salle_input" style="visibility: hidden;">
+                                        <span class="input-group-text">@</span>
+                                        <input type="number" name="nombre_de_salle" class="form-control" placeholder="Nombre de Salles" required>
                                     </div>
                                 </div>
                             </div>
-            
+                        
                             <div class="row text-center mt-4">
                                 <div class="col-md-3"></div>
-                                <div class="col"><button type="submit" class="btn btn-primary" style="display: inline-block;">Creer-></button></div>
+                                <div class="col">
+                                    <button type="submit" class="btn btn-primary">Créer →</button>
+                                </div>
                                 <div class="col-md-3"></div>
                             </div>
                         </form>
+                        
                     </div>
                 </div>
             </div>
@@ -402,17 +412,73 @@
                     </button-->
              
 
-                    <div class="dropdown bg-transparent me-2" style="z-index: 1000;">
+                    <div class="dropdown bg-transparent me-2 merriweather " style="z-index: 1000; ">
                         <a class="btn btn-outline-light dropdown-toggle" href="#" role="button" style="border-radius: 4em; font-size: 1em;" data-bs-toggle="dropdown" aria-expanded="false">
                             <i id="barsIcon" class="fas fa-bars"></i>
                         </a>
                     
                         <ul class="dropdown-menu text-dark" >
-                            <li><a class="dropdown-item" href="#">Parametres</a></li>
-                            {% if host.username == request.user.username %}
-                            <li><a class="dropdown-item" onclick="openclass()" href="#">Creer une salle</a></li>
+
+                            <div id="admin" style="display: none;">
+                                <li><a class="dropdown-item" href="#">Nommer co-admin</a></li>
+                                  <div class="list-group">
+                                    <div id="discusr" style="max-height: 10vh; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                                    {% for utilisateurs in list_users %}
+                                    {% if utilisateurs.username != request.user.username  and utilisateurs.username != host.username %}
+                                    <div class="list-group-item d-flex justify-content-between redressed">
+                                       
+                                        <span>{{ utilisateurs.username }}</span>
+                                        <select id="c" class="">
+                                            <option onclick="addCoAdmin({{ utilisateurs.id }})" > co-hôte</option>
+                                            <option onclick="removeCoAdmin({{ utilisateurs.id }})" > Retirer co-hôte</option>
+                                        </select>
+                                     
+    
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                  </div>
+                                </div>
+                                </div>
+
+                            <!--li><a class="dropdown-item" href="#">Parametres</a></li-->
+                            {% if list_users and host.username == request.user.username %}
+                            <div id="admin">
+                            <li><a class="dropdown-item" href="#">Nommer co-admin</a></li>
+                              <div class="list-group">
+                                <div id="discussion-container" style="max-height: 10vh; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                                {% for utilisateurs in list_users %}
+                                {%if utilisateurs.username != request.user.username %}
+                                <div class="list-group-item d-flex justify-content-between redressed">
+                                    
+                                    <span>{{ utilisateurs.username }}</span>
+                                    <select id="c" class="">
+                                        <option onclick="addCoAdmin({{ utilisateurs.id }})" > co-hôte</option>
+                                        <option onclick="removeCoAdmin({{ utilisateurs.id }})" > Retirer co-hôte</option>
+                                    </select>
+                                    
+
+                                </div>
+                                {%endif %}
+                                {% endfor %}
+                              </div>
+                            </div>
+                            </div>
+                              {% endif %}
+
+
+                              {% if host.username == request.user.username %}
+                          
+                            <li><a class="dropdown-item" onclick="openclass()" href="#">Creer des salles</a></li>
                             {% endif %}
-                    
+
+                              <div id="add_salles">
+                            
+                          
+                            <li><a class="dropdown-item" onclick="openclass()" href="#">Creer des salles</a></li>
+                           
+                            </div>
+
                             {% if rooms %}
                             <div class="input-group mb-3">
                                 <div class="input-group-prepend">
@@ -451,7 +517,7 @@
                         }
                     
                         // Rafraîchir toutes les 1 seconde
-                        setInterval(fetchRooms, 1000);
+                       setInterval(fetchRooms, 1000);
                     </script>
 
 
@@ -520,6 +586,16 @@
 
     </main>
 
+    <!-- Conteneur du message popup -->
+<div id="popup-message" class="toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+        <div class="toast-body" id="popup-text">
+            <!-- Message dynamique -->
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+</div>
+
     <script src="https://cdn.agora.io/sdk/release/AgoraRTC_N.js"></script>
     <script src=" https://cdn.jsdelivr.net/npm/agora-rtm-sdk@1.5.1/agora-rtm.min.js "></script>
 
@@ -535,8 +611,48 @@
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
         crossorigin="anonymous"></script>
 
-
         <script>
+            function addCoAdmin(userId) {
+                const meet = "{{ meeting_id.id }}";
+                console.log("Add: ", meet)
+                // Envoie une requête pour ajouter un utilisateur en tant que co-hôte
+                fetch(`/co-admin/${userId}/{{ meeting_id.id }}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Utilisateur ajouté comme co-hôte.");
+                        //location.reload();  // Rafraîchit la page pour mettre à jour l'interface
+                    }
+                })
+                .catch(error => console.error("Erreur:", error));
+            }
+        
+            function removeCoAdmin(userId) {
+                // Envoie une requête pour retirer un utilisateur de la liste des co-hôtes
+                fetch(`/retirer-co-admin/${userId}/{{ meeting_id.id }}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Utilisateur retiré comme co-hôte.");
+                       // location.reload();  // Rafraîchit la page pour mettre à jour l'interface
+                    }
+                })
+                .catch(error => console.error("Erreur:", error));
+            }
+        </script>
+        <script>
+
+            
             function chat_send() {
                     const userInput = document.getElementById('user_askinput');
                     const userMessage = userInput.value.trim();
@@ -1047,44 +1163,59 @@ document.addEventListener("DOMContentLoaded", function() {
     
 <script>
     
-
-document.getElementById('create_room').addEventListener('submit', function(e) {
+    document.getElementById('create_room').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
-    closeclass();
-    console.log("url", `/create_room/${channel_name}`)
+
     fetch(`/create_room/${channel_name}/`, {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRFToken': '{{ csrf_token }}'  // Ajoutez le CSRF token si nécessaire
+            'X-CSRFToken': '{{ csrf_token }}'
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.message) {
+            // Met à jour la liste des salles
             const select = document.getElementById("inputGroupSelect01");
-                const rooms = data.rooms; // La liste des salles renvoyée par la vue Django
-
-                // Vide les options actuelles sauf celle par défaut
-                while (select.options.length > 1) {
-                    select.remove(1); // Supprime tout sauf la première option
-                }
-
-                // Ajouter dynamiquement les options pour chaque salle
-                rooms.forEach(room => {
-                    const option = document.createElement("option");
-                    option.value = room.name; // Assurez-vous que "name" est une clé dans votre queryset values()
-                    option.textContent = room.name;
-                    select.appendChild(option);
-                });
+            select.innerHTML = '<option value="" selected>Salle 0</option>';
+            data.rooms.forEach(room => {
+                const option = document.createElement("option");
+                option.value = room.name;
+                option.textContent = room.name;
+                select.appendChild(option);
+            });
+            closeclass()
+            // Affiche le popup si un message Django est présent
+            if (data.django_messages) {
+                showPopupMessage(data.django_messages.join(" "));
+            }
         } else if (data.error) {
-            alert(data.error);  // Affiche un message d'erreur
+            showPopupMessage(data.error, "bg-danger");
         }
     })
     .catch(error => console.error('Erreur:', error));
 });
 
+// Fonction pour afficher le popup avec un message
+function showPopupMessage(message, bgColor = "bg-success") {
+    const popup = document.getElementById("popup-message");
+    const popupText = document.getElementById("popup-text");
+
+    popup.classList.remove("bg-success", "bg-danger");
+    popup.classList.add(bgColor);
+    popupText.textContent = message;
+
+    // Affiche le toast avec Bootstrap
+    const toast = new bootstrap.Toast(popup);
+    toast.show();
+
+    // Disparition automatique après 3 secondes
+    setTimeout(() => {
+        toast.hide();
+    }, 3000);
+}
 
 document.getElementById("chantsendlang").addEventListener("click", function(event) {
     if (event.target.classList.contains("dropdown-item")) {
@@ -1138,6 +1269,36 @@ editSpan.addEventListener('click', () => {
     document.addEventListener('DOMContentLoaded', function () {
         toggleInputs(); // Assurez-vous qu'aucun champ n'est visible au début
     });
+</script>
+
+<script>
+     // Fonction pour vérifier si l'utilisateur est un co-hôte toutes les 2 secondes
+     const meetingId = "{{ meeting_id.id }}"; // Passer l'ID de la réunion depuis le template Django
+
+// Fonction pour récupérer les données de l'API
+function checkIfHost() {
+    fetch(`/check-if-host/${meetingId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const salles = document.getElementById('add_salles');
+            
+            // Vérifie si l'utilisateur est un co-hôte et ajoute le bouton "Créer une salle"
+            if (data.is_host) {
+                // Crée le bouton et l'ajoute au menu
+                //const createRoomItem = document.createElement('li');
+                salles.innerHTML = `<a class="dropdown-item" href="#" onclick="openclass()">Créer une salle</a>`;
+                document.getElementById('admin').style.display = 'block';
+               // salles.innerHTML=createRoomItem;
+            }else{
+                salles.innerHTML =``;
+                document.getElementById('admin').style.display = 'none';
+            }
+        })
+        .catch(error => console.error('Erreur de récupération des données:', error));
+}
+
+// Exécuter la vérification toutes les 2 secondes
+setInterval(checkIfHost, 2000);
 </script>
 </body>
 </html>
