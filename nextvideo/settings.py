@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-(_r8&+xf5=z(%m55lkj^p52#p87-cna&wf3&44t386iex*(haf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  
+DEBUG = False  
 
 ALLOWED_HOSTS = ["b5ae-46-193-67-154.ngrok-free.app", "aivoicedubber.com","414f-46-193-67-154.ngrok-free.app", "127.0.0.1"]#, ,"localhost","videoadd.fggbdpcqfnguf4ga.eastus.azurecontainer.io", "aivoicedubber.com"]
 CSRF_TRUSTED_ORIGINS =["https://*.aivoicedubber.com","https://*.b5ae-46-193-67-154.ngrok-free.app", "https://b5ae-46-193-67-154.ngrok-free.app"]#,"https://aivoicedubber.com",  "https://.*aivoicedubber.com"]
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'videoapp',
     'channels',
+    'paypal.standard.ipn',
     
   
    # 'corsheaders',
@@ -157,7 +158,8 @@ PERCENT=0
 EMAIL_HOST="smtp.gmail.com"
 EMAIL_PORT= 587
 EMAIL_USE_TLS= True
-EMAIL_HOST_USER=os.getenv('EMAIL_HOST_USER')
+
+EMAIL_HOST_USER="voicetranslator0@gmail.com"#os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD=os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = False  # Assurez-vous que c'est désactivé si TLS est activé
 
@@ -173,3 +175,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # Optionnel : Activez la persistance de la session
 SESSION_SAVE_EVERY_REQUEST = True
+
+PAYPAL_RECEIVER_EMAIL = "sb-sxjre37396377@business.example.com"
+PAYPAL_TEST = True

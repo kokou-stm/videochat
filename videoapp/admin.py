@@ -6,4 +6,5 @@ admin.site.register(Rooms)
 admin.site.register(Meeting)
 admin.site.register(Chatmessages)
 admin.site.register(Discussion)
+admin.site.register(Subscription)
 

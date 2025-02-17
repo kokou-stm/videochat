@@ -75,6 +75,21 @@ import codecs,math
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponseForbidden
 
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains import RetrievalQA,  ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
+from langchain_openai import OpenAI, ChatOpenAI
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+from dotenv import load_dotenv, find_dotenv
+from django.shortcuts import render, redirect
+from .models import Meeting
+import random
+import string
+
+_ = load_dotenv(find_dotenv())
+
 # Create your views here.
 
 @csrf_exempt
@@ -99,15 +114,33 @@ def generate_agora_token(request, channel_name):
 @login_required
 def index(request):
     discussions = Discussion.objects.all()
-    print("Discu: ", discussions)
-    return render(request, "index.html", {"discussions": discussions})
+    
+    subscription, created = Subscription.objects.get_or_create(user=request.user)
+    '''except Subscription.DoesNotExist:
+        subscription = Subscription.objects.create(user=request.user)'''
+    print("Discu: ", subscription.plan, subscription.credit_minutes)
+    return render(request, "index.html", {"discussions": discussions,"subscription": subscription})
    
 
-
-from django.shortcuts import render, redirect
-from .models import Meeting
-import random
-import string
+@login_required
+def profile(request):
+    membre = request.user
+    if request.method =="POST":
+        
+        # Récupérer les données du formulaire
+        user = request.user
+        print(request.POST.get('firstname'), user)
+        user.first_name = request.POST.get('firstname')
+        user.last_name = request.POST.get('lastname')
+        user.save()
+        #user.phone = request.POST.get('phone', membre.phone)
+        #membre.numero_de_carte = request.POST.get('numero_de_carte', membre.numero_de_carte)
+        
+        # Sauvegarder les modifications
+        #membre.save()
+        messages.info(request, f"Modifications enregistrés !")
+        return redirect('index')  
+    return render(request, "profile.html", {"membre":membre})
 
 
 
@@ -677,6 +710,37 @@ def create_meeting(request):
 
 
 @login_required
+def contact(request):
+    context={}
+    if request.method =="POST":
+        
+            Subject = request.POST.get("subject")
+
+            Gmail = request.POST.get("email")
+            message = f"Nom d'utilisateur: {request.user.username} " f'Adresse mail: {Gmail}\n' + request.POST.get("message")
+            print(message)
+            
+            print(Gmail,  [settings.EMAIL_HOST_USER])
+            emailsender_contact(Subject, message, settings.EMAIL_HOST_USER, settings.EMAIL_HOST_USER, contact="yes")
+            
+
+            messages.success(request, "Nous avons bien reçu votre message. Nous vous revenons très bientot !!!")
+           
+
+            #return JsonResponse({'success': True, 'mess': "Your message is succesfull send  !!!"})
+            return redirect("index")
+        #return HttpResponseRedirect("y")
+        #return HttpResponse("yours message is succesfull send")
+    return redirect("index")
+
+
+
+
+def gratos(request):
+    meeting = Meeting.objects.create(name=f"{request.user.username}_home", password="1234", host=request.user )
+    return redirect('home', meeting_id=meeting.id)
+
+@login_required
 def home(request, meeting_id=None):
     
     if meeting_id:
@@ -762,7 +826,7 @@ def join_meeting(request):
                 return redirect('home', meeting_id=meeting.id)  # Rediriger vers la réunion
         except:
            
-            messages.info(request, "dentifiant ou mot de passe incorrect ! ")
+            messages.info(request, "Identifiant ou mot de passe incorrect ! ")
             # Mot de passe incorrect
             return render(request, 'index.html', {'meeting': 'Mot de passe incorrect'})
    
@@ -779,12 +843,15 @@ def create_discussion(request):
 
         
         email_list = [email.strip() for email in emails.split(',') if email.strip()]
+        email_list.append(email)
         
-    
+        print('Email_list: ', email_list)
         invalid_emails = []
         for email in email_list:
-            if not validate_email(email):
-                invalid_emails.append(email)
+            if not "@" in email:
+                email_list.remove(email)
+            """if not validate_email(email):
+                invalid_emails.append(email)"""
         
         if invalid_emails:
             print(f"Les emails invalides sont : {', '.join(invalid_emails)}")
@@ -795,7 +862,7 @@ def create_discussion(request):
             current_host = request.META["HTTP_HOST"]
             Subject = "Invitation à une discussion"
             
-          
+            
 
             html = f"""
             <!DOCTYPE html>
@@ -803,7 +870,7 @@ def create_discussion(request):
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Invitation à une réunion VideoCall</title>
+                <title>Invitation la une Discussion {name} sur VideoCall</title>
                 <style>
                     body {{
                         font-family: Arial, sans-serif;
@@ -864,8 +931,8 @@ def create_discussion(request):
                         <p>Pour rejoindre la réunion, veuillez cliquer sur le bouton ci-dessous :</p>
                         <a href="https://www.videocall.com/reunion/123456" class="button">Rejoindre la Discussion</a>
                         <p>Si le lien ne fonctionne pas, copiez et collez l'adresse suivante dans votre navigateur :</p>
-                        <p><a href="https://www.videocall.com/reunion/123456" style="color: #007bff;">https://www.videocall.com/reunion/123456</a></p>
-                        <p>{current_host}/home/{discussion.id}/</p>
+                        <p><a href="{current_host}/discussion/{discussion.id}/" style="color: #007bff;">https://www.videocall.com/reunion/123456</a></p>
+                        <p>{current_host}/discussion/{discussion.id}/</p>
                     </div>
                     <div class="footer">
                         <p>Nous avons hâte de vous retrouver sur VideoCall.</p>
@@ -958,7 +1025,8 @@ def get_messages(request, discuss_id):
     return render(request, 'create_room.html', {'form': form})
 '''
 
-
+def faq(request):
+    return render(request, 'faq.html')
 
 from django.contrib import messages
 from django.http import JsonResponse
@@ -1171,7 +1239,7 @@ def group_emailsender(Subject, html, user_emails):
     message["Subject"] = Subject
     # un émetteur
     message["From"] = f"VideoCall <{email_address}>"
-
+    
     # Destinataires multiples
     message["To"] = ", ".join(user_emails)  # On joint les emails par une virgule
     
@@ -1191,15 +1259,41 @@ def group_emailsender(Subject, html, user_emails):
 
 
 
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.chains import RetrievalQA,  ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
-from langchain_openai import OpenAI, ChatOpenAI
-from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
-from dotenv import load_dotenv, find_dotenv
-_ = load_dotenv(find_dotenv())
+
+
+
+def emailsender_contact(Subject, html, email_address,  user_email, contact = None):
+    print('Vals: ', Subject, html, email_address,  user_email, )
+    message = MIMEMultipart("alternative")
+    # on ajoute un sujet
+    message["Subject"] = Subject
+    # un émetteur
+    message["From"] = f"VideoCall <{email_address}>"
+    # un destinataire
+    
+    if contact:
+        user_email = [user_email, "sitsopekokou@gmail.com"]
+    
+    # on crée deux éléments MIMEText 
+    message["To"] = ", ".join(user_email)
+    html_mime = MIMEText(html, 'html')
+
+    # on attache ces deux éléments 
+    message.attach(html_mime)
+
+    # on crée la connexion
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_address, smtp_port, context=context) as server:
+        # connexion au compte
+        server.login(email_address, email_password)
+        # envoi du mail
+        server.sendmail(email_address, user_email, message.as_string())
+
+
+
+
+
+
 openai.api_key ="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"
 os.environ["OPENAI_API_KEY"] ="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"
 
@@ -1235,3 +1329,244 @@ def boat(request):
         
 
         return JsonResponse({'response': result["answer"],})
+    
+
+
+
+
+from paypal.standard.ipn.signals import valid_ipn_received
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from paypal.standard.forms import PayPalPaymentsForm
+
+from paypal.standard.models import ST_PP_COMPLETED
+from paypal.standard.ipn.signals import valid_ipn_received
+from django.dispatch import receiver
+from .models import Subscription
+from django.utils.timezone import now, timedelta
+from django.contrib.auth.models import User
+
+
+
+def pricing_page(request):
+    plans = SubscriptionPlan.objects.all()
+    return render(request, "pricing.html", {"plans": plans})
+
+
+def paiement_paypal1(request, montant):
+    paypal_dict = {
+        "business": settings.PAYPAL_RECEIVER_EMAIL,
+        "amount": montant,
+        "item_name": f"Plan {montant}€",
+        "invoice": f"INV{montant}12345",
+        "currency_code": "EUR",
+        "notify_url": request.build_absolute_uri("/paypal/"),
+        "return_url": request.build_absolute_uri("/paiement-reussi/"),
+        "cancel_return": request.build_absolute_uri("/paiement-annule/"),
+    }
+    
+    form = PayPalPaymentsForm(initial=paypal_dict)
+    #print("form: ", form)
+    return render(request, "paiement.html", {"form": form})
+
+
+
+@receiver(valid_ipn_received)
+def paiement_reussi1(sender, **kwargs):
+    ipn = sender
+    if ipn.payment_status == "Completed":
+        print(f"Paiement reçu pour {ipn.invoice} : {ipn.mc_gross} {ipn.mc_currency}")
+
+
+
+'''
+
+def abonnement_view(request):
+    paypal_dict = {
+        "business": settings.PAYPAL_RECEIVER_EMAIL,
+        "a3": "10.00",  # Prix de l'abonnement
+        "p3": 1,  # Durée de chaque cycle
+        "t3": "M",  # M = Mois (W = semaine, Y = année)
+        "src": 1,  # Répéter l’abonnement
+        "srt": "",  # Nombre de cycles (laisser vide pour illimité)
+        "item_name": "Abonnement Premium",
+        "invoice": "INV-12345",
+        "notify_url": request.build_absolute_uri("/paypal/"),
+        "return": request.build_absolute_uri("/payment/success/"),
+        "cancel_return": request.build_absolute_uri("/"),
+    }
+    form = PayPalPaymentsForm(initial=paypal_dict)
+    return render(request, "subscribe.html", {"form": form})'''
+
+@login_required
+def subscribe(request, montant):
+    user = request.user
+    
+    paypal_dict = {
+        "business": settings.PAYPAL_RECEIVER_EMAIL,
+        "amount": montant,
+        "item_name": f"Abonnement {montant}€",
+        "invoice": f"SUB{user.id}{montant}{int(now().timestamp())}",
+        "currency_code": "EUR",
+        "notify_url": request.build_absolute_uri("/paypal-ipn/"),
+        "return_url": request.build_absolute_uri("/"),
+        "cancel_return": request.build_absolute_uri("/"),
+        "custom": user.id,  # Permet d’identifier l'utilisateur
+    }
+    
+    form = PayPalPaymentsForm(initial=paypal_dict)
+    return render(request, "subscribe_payment.html", {"form": form, "montant": montant})
+
+
+
+@receiver(valid_ipn_received)
+def abonnement_paypal_ipn(sender, **kwargs):
+    ipn = sender
+    if ipn.payment_status == "Completed":
+        user = User.objects.get(email=ipn.payer_email)
+        user.profile.abonne = True
+        user.profile.save()
+
+
+from django.shortcuts import render
+
+def paiement_reussi2(request):
+    return render(request, "success.html", {"message": "Paiement réussi !"})
+
+
+
+@receiver(valid_ipn_received)
+def subscription_success(sender, **kwargs):
+    ipn = sender
+    if ipn.payment_status == ST_PP_COMPLETED:
+        user_id = int(ipn.custom)  # Récupération de l'ID utilisateur
+        user = User.objects.get(id=user_id)
+        
+        # Définition de la durée de l'abonnement
+        duration = timedelta(days=30)
+        end_date = now() + duration
+        
+        # Création ou mise à jour de l'abonnement
+        subscription, created = Subscription.objects.update_or_create(
+            user=user,
+            defaults={"plan": f"Plan {ipn.mc_gross}€", "amount": ipn.mc_gross, "end_date": end_date}
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from django.utils.timezone import now
+
+
+plans_paypal = [
+    {"name": "Gratuit", "price": 0, "features": [
+        {"name": "Crédit d'appel", "value": "5h/mois"},
+        {"name": "Traduction IA", "value": "Oui"},
+        {"name": "Renouvellement", "value": "Mensuel"},
+    ]},
+    {"name": "Basique", "price": 10, "features": [
+        {"name": "Crédit d'appel", "value": "10h (achat unique)"},
+        {"name": "Traduction IA", "value": "Oui"},
+        {"name": "Renouvellement", "value": "Manuel"},
+    ]},
+    {"name": "hebdomadaire", "price": 10, "features": [
+        {"name": "Crédit d'appel", "value": "10h (Abonnement)"},
+        {"name": "Traduction IA", "value": "Oui"},
+        {"name": "Renouvellement", "value": "Mensuel"},
+    ]},
+    {"name": "illimitee", "price": 30, "features": [
+        {"name": "Crédit d'appel", "value": "illimite"},
+        {"name": "Traduction IA", "value": "Oui"},
+        {"name": "Renouvellement", "value": "Mensuel"},
+    ]},
+]
+
+
+def abonnement_view(request):
+    
+    try:
+        subscription = Subscription.objects.get(user=request.user)
+        current_plan = subscription.plan  # Supposons que Subscription a un champ `plan`
+    except Subscription.DoesNotExist:
+        subscription = None
+        current_plan = "free"
+
+    return render(request, "subscribe.html", {
+        "plans": plans_paypal,
+        "subscription": subscription,
+        "current_plan": current_plan
+    })
+
+
+def subscription_view(request):
+    try:
+        subscription = Subscription.objects.get(user=request.user)
+    except Subscription.DoesNotExist:
+        subscription = Subscription.objects.create(user=request.user)
+
+    return render(request, "subscriptions.html", {"subscription": subscription})
+
+
+
+def paiement_paypal(request, plan, montant):
+  
+    # Assurez-vous que le plan est valide et dans la liste
+    if plan not in ['Gratuit', 'Basique', 'hebdomadaire', 'illimitee']:
+        return render(request, "erreur.html", {"message": "Plan invalide"})
+
+    paypal_dict = {
+        "business": settings.PAYPAL_RECEIVER_EMAIL,
+        "amount": montant,
+        "item_name": f"VideoCall Crédit {montant}€",
+        "invoice": f"Payment{request.user.id}{montant}{int(now().timestamp())}",
+        "currency_code": "EUR",
+        "notify_url": request.build_absolute_uri("/paypal-ipn/"),
+        "return_url": request.build_absolute_uri(f"/paiement-reussi/{plan}/"),
+        "cancel_return": request.build_absolute_uri("/"),
+        "custom": request.user.id,  # Permet d'identifier l'utilisateur
+    }
+
+    # Pour les plans d'abonnement, nous ajoutons des options spécifiques
+    if plan in ['hebdomadaire', 'illimitee']:
+        paypal_dict["cmd"] = "_xclick-subscriptions"
+        paypal_dict["item_name"] = f"VideoCall Crédit {plan.capitalize()} Plan"
+        paypal_dict["invoice"] = f"INV-{plan}-{request.user.id}-{now().timestamp()}"
+        paypal_dict["a3"] = montant  # Le montant par période
+        paypal_dict["p3"] = 1  # Période de facturation (1 signifie hebdomadaire ou mensuel selon t3)
+        paypal_dict["src"] = 1  # Renouvellement automatique activé
+        paypal_dict["sra"] = 1  # Activer le renouvellement automatique
+
+        # Fréquence du renouvellement (S pour hebdomadaire, M pour mensuel)
+        if plan == 'hebdomadaire':
+            paypal_dict["t3"] = "W"  # Renouvellement chaque semaine
+        elif plan == 'illimitee':
+            paypal_dict["t3"] = "M"  # Renouvellement chaque mois
+
+    form = PayPalPaymentsForm(initial=paypal_dict)
+    return render(request, "paiement.html", {"form": form})
+
+def paiement_reussi(request, plan):
+    #plan_actuel = [i for i in plans_paypal if i["name"]=="plan"][0]
+    subscription, _ = Subscription.objects.get_or_create(user=request.user)
+    subscription.upgrade(plan)
+    messages.success(request, "Paiement reussi!")
+    return redirect("index")
+
+def paiement_annule(request):
+    return render(request, "index.html")

@@ -1,7 +1,23 @@
-//#1
-let client = AgoraRTC.createClient({mode:'rtc', codec:"vp8"})
+// Initialiser les variables globales
+let subscriptionKey = "GAhhrZCYQlVVFPpcyRRR2B2GypAFI9w1oxaYPlqTXOJIRaDt1chCJQQJ99AKACYeBjFXJ3w3AAAYACOGSatX";
+let serviceRegion = "eastus";
 
-//#2
+let audioConfig;
+let recognizer;
+let input_voice= 'fr-FR';
+let targetLanguage = 'en-US';
+let lastRecognizedText = '';
+let mediaStream = null;
+
+// Variables pour Agora
+const APP_ID = "f2891190d713482dbed4c3fd804ec233";
+const CHANNEL_NAME = "channel1";
+let client;
+let localAudioTrack;
+let localVideoTrack;
+let isJoined = false;
+let  audioPlaying = false;
+
 let config = {
     appid:"f2891190d713482dbed4c3fd804ec233",
     //token:null,
@@ -9,9 +25,6 @@ let config = {
     channel:"channel1",
 }
 
-const response = await fetch('/generate_agora_token/');
-const data = await response.json();
-token = data.token;
 //#3 - Setting tracks for when user joins
 let localTracks = {
     audioTrack:null,
@@ -27,18 +40,36 @@ let localTrackState = {
 //#5 - Set remote tracks to store other users
 let remoteTracks = {}
 
-
 // Microphone 
 let microphonebut = document.getElementById("microphonebut");
 let microphoneicon = document.getElementById("microphoneicon");
 
+
 document.getElementById('join-btn').addEventListener('click', async () => {
     config.uid = document.getElementById('username').value
-    await joinStreams()
+    await fetchToken()
     document.getElementById('join-wrapper').style.display = 'none'
     document.getElementById('footer').style.display = 'flex'
     document.getElementById('bottom-bar').style.display = 'flex'
 })
+
+
+// Récupérer le jeton Agora et initialiser
+async function fetchToken() {
+    try {
+        const response = await fetch('/generate_agora_token/');
+        const data = await response.json();
+        token = data.token;
+        initializeAgora();
+        //startRecognition();
+    } catch (error) {
+        console.error("Error fetching token: ", error);
+    }
+}
+
+
+
+
 
 document.getElementById('mic-btn').addEventListener('click', async () => {
     //Check if what the state of muted currently is
@@ -62,8 +93,6 @@ document.getElementById('mic-btn').addEventListener('click', async () => {
 
 })
 
-
-
 document.getElementById('camera-btn').addEventListener('click', async () => {
     //Check if what the state of muted currently is
     //Disable button
@@ -80,8 +109,6 @@ document.getElementById('camera-btn').addEventListener('click', async () => {
     }
 
 })
-
-
 
 document.getElementById('leave-btn').addEventListener('click', async () => {
     //Loop threw local tracks and stop them so unpublish event gets triggered, then set to undefined
@@ -103,17 +130,53 @@ document.getElementById('leave-btn').addEventListener('click', async () => {
     document.getElementById('join-wrapper').style.display = 'block'
 
 })
+// Initialisation de Agora RTC
+async function initializeAgora() {
+    client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
+    client.on('user-published', async (user, mediaType) => {
+       
+        console.log('Handle user joined')
 
-
-
-//Method will take all my info and set user stream in frame
-let joinStreams = async () => {
-    //Is this place hear strategicly or can I add to end of method?
+        //#11 - Add user to list of remote users
+        remoteTracks[user.uid] = user
     
-    client.on("user-published", handleUserJoined);
-    client.on("user-left", handleUserLeft);
+        //#12 Subscribe ro remote users
+        await client.subscribe(user, mediaType)
+       
+        
+        if (mediaType === 'video'){
+            let player = document.getElementById(`video-wrapper-${user.uid}`)
+            console.log('player:', player)
+            if (player != null){
+                player.remove()
+            }
+     
+            player = `<div class="video-containers " id="video-wrapper-${user.uid}">
+                            <p class="user-uid "><img class="volume-icon" id="volume-${user.uid}" src="./assets/volume-on.svg" /> ${user.uid}</p>
+                            <div  class="video-player player" id="stream-${user.uid}"></div>
+                          </div>`
+            document.getElementById('user-streams').insertAdjacentHTML('beforeend', player);
+             user.videoTrack.play(`stream-${user.uid}`)
+    
+            
+    
+              
+        }
+        
+    
+        if (mediaType === 'audio') {
+            user.audioTrack.play();
+          }
+    });
 
+    client.on('user-unpublished', (user) => {
+        console.log('Handle user left!')
+        //Remove from remote users and remove users video wrapper
+        delete remoteTracks[user.uid]
+        document.getElementById(`video-wrapper-${user.uid}`).remove()
+    });
+    
 
     client.enableAudioVolumeIndicator(); // Triggers the "volume-indicator" callback event every two seconds.
     client.on("volume-indicator", function(evt){
@@ -121,24 +184,27 @@ let joinStreams = async () => {
             let speaker = evt[i].uid
             let volume = evt[i].level
             if(volume > 0){
-                document.getElementById(`volume-${speaker}`).src = './assets/volume-on.svg'
+                document.getElementById(`volume-${speaker}`).src = "./assets/volume-on.svg"
             }else{
-                document.getElementById(`volume-${speaker}`).src = './assets/volume-off.svg'
+                document.getElementById(`volume-${speaker}`).src = "./assets/volume-on.svg"
             }
             
         
             
         }
     });
-
-    //#6 - Set and get back tracks for local user
-    [config.uid, localTracks.audioTrack, localTracks.videoTrack] = await  Promise.all([
-        client.join(config.appid, config.channel, token ||null, config.uid ||null),
+    config.uid= await client.join(APP_ID, CHANNEL_NAME, token, null);
+    localTracks.audioTrack =await AgoraRTC.createMicrophoneAudioTrack();
+     localTracks.videoTrack = await AgoraRTC.createCameraVideoTrack();
+  
+     //#6 - Set and get back tracks for local user
+     [config.uid, localTracks.audioTrack, localTracks.videoTrack] = await  Promise.all([
+        client.join(APP_ID, CHANNEL_NAME, token, config.uid),
         AgoraRTC.createMicrophoneAudioTrack(),
         AgoraRTC.createCameraVideoTrack()
 
     ])
-    
+
     //#7 - Create player and add it to player list
     let player = `<div class="video-containers" id="video-wrapper-${config.uid}">
                         <p class="user-uid"><img class="volume-icon" id="volume-${config.uid}" src="./assets/volume-on.svg" /> ${config.uid}</p>
@@ -146,61 +212,13 @@ let joinStreams = async () => {
                   </div>`
 
     document.getElementById('user-streams').insertAdjacentHTML('beforeend', player);
-    //#8 - Player user stream in div
+                  //#8 - Player user stream in div
     localTracks.videoTrack.play(`stream-${config.uid}`)
-    
 
-    //#9 Add user to user list of names/ids
-
+   
     //#10 - Publish my local video tracks to entire channel so everyone can see it
     await client.publish([localTracks.audioTrack, localTracks.videoTrack])
-
 }
-
-
-let handleUserJoined = async (user, mediaType) => {
-    console.log('Handle user joined')
-
-    //#11 - Add user to list of remote users
-    remoteTracks[user.uid] = user
-
-    //#12 Subscribe ro remote users
-    await client.subscribe(user, mediaType)
-   
-    
-    if (mediaType === 'video'){
-        let player = document.getElementById(`video-wrapper-${user.uid}`)
-        console.log('player:', player)
-        if (player != null){
-            player.remove()
-        }
- 
-        player = `<div class="video-containers " id="video-wrapper-${user.uid}">
-                        <p class="user-uid "><img class="volume-icon" id="volume-${user.uid}" src="./assets/volume-on.svg" /> ${user.uid}</p>
-                        <div  class="video-player player" id="stream-${user.uid}"></div>
-                      </div>`
-        document.getElementById('user-streams').insertAdjacentHTML('beforeend', player);
-         user.videoTrack.play(`stream-${user.uid}`)
-
-        
-
-          
-    }
-    
-
-    if (mediaType === 'audio') {
-        user.audioTrack.play();
-      }
-}
-
-
-let handleUserLeft = (user) => {
-    console.log('Handle user left!')
-    //Remove from remote users and remove users video wrapper
-    delete remoteTracks[user.uid]
-    document.getElementById(`video-wrapper-${user.uid}`).remove()
-}
-
 
 
 
@@ -210,22 +228,19 @@ document.addEventListener("DOMContentLoaded", () => {
     let localScreenTrack = null;
     let screenClient = null;
     let screenContainer = null;
-    let mainClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+    //let screenClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
     async function startScreenShare() {
         try {
-            // Réafficher tous les enfants
-      
-
             screenClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
             const tokenResponse = await fetch('/generate_agora_token/');
             const tokenData = await tokenResponse.json();
-            await screenClient.join(config.appid, config.channel, tokenData.token, null);
+            await screenClient.join(APP_ID, CHANNEL_NAME, tokenData.token, null);
 
-            localScreenTrack = await AgoraRTC.createScreenVideoTrack( {encoderConfig: "1080p_1"});
-
+            localScreenTrack = await AgoraRTC.createScreenVideoTrack();
             
-
+            
+          
              // Ajoute le partage d'écran à l'interface utilisateur
              const player = `<div class="video-containers" style="z-index: 100;" id="screen-share-wrapper">
              <p class="user-uid">Partage d'écran</p>
@@ -237,20 +252,18 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('user-streams').insertAdjacentHTML('beforeend', player);
 
             localScreenTrack.play("screen-share-player");
-
-           
-             
-            // move the main user from the full-screen div
-              
             await screenClient.publish(localScreenTrack);
-             // Sauvegarde la piste dans localTracks pour gestion future
-             localTracks.screenTrack = localScreenTrack;
+            // move the main user from the full-screen div
 
-             // Change l'icône ou l'état du bouton si nécessaire
-             document.getElementById('screenShareButton').style.backgroundColor = 'rgb(163, 45, 45)';
+              // Change l'icône ou l'état du bouton si nécessaire
+              document.getElementById('screenShareButton').style.backgroundColor = 'rgb(163, 45, 45)';
+            // Sauvegarde la piste dans localTracks pour gestion future
+            localTracks.screenTrack = localScreenTrack;
+
 
             localScreenTrack.on('track-ended', stopScreenShare);
             
+           
         } catch (error) {
             console.error("Erreur de partage d'écran: ", error);
         }
@@ -258,37 +271,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function stopScreenShare() {
         if (localScreenTrack) {
-           
-            localScreenTrack.stop();
-            localScreenTrack.close();
             await screenClient.unpublish(localScreenTrack);
-    
-            // Supprime l'élément d'interface utilisateur associé
-            document.getElementById('screen-share-wrapper').remove();
-    
-            // Réinitialise la piste
-            localTracks.screenTrack = null;
-            localScreenTrack= null;
-            // Change l'icône ou l'état du bouton si nécessaire
-            document.getElementById('screenShareButton').style.backgroundColor = '';
-            Array.from(document.getElementById('user-streams').children).forEach(child => {
-                child.style.display = 'block';
-            });
-            
+            localScreenTrack.close();
+            screenContainer.remove();
+            await screenClient.leave();
         }
     }
-    
+
     screenShareButton.addEventListener('click', () => {
         if (localScreenTrack) {
-            console.log("valuer: ",localScreenTrack)
             stopScreenShare();
         } else {
             startScreenShare();
         }
     });
 
+   
+});
 
-   // Gestion du bouton vidéo
+
 document.addEventListener("DOMContentLoaded", () => {
     let videobutton = document.getElementById("videobutton");
     let videoicon = document.getElementById("videoicon");
@@ -301,31 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
             videoicon.classList.replace("fa-video-slash", "fa-video");
         }
     });
-});
-
-    mainClient.on('message', (msg) => {
-        const message = JSON.parse(msg.text);
-        if (message.type === 'screen-share') {
-            // Interface management
-        }
-    });
-});
-
-
-
-
-
-document.getElementById('screen-share-player').addEventListener('dblclick', () => {
-    const elem = document.getElementById('screen-share-player');
-    if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-    } else if (elem.mozRequestFullScreen) { /* Firefox */
-        elem.mozRequestFullScreen();
-    } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-        elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { /* IE/Edge */
-        elem.msRequestFullscreen();
-    }
 });
 
 

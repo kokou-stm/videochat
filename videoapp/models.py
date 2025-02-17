@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils.timezone import now, timedelta
 
 
 class VerificationCode(models.Model):
@@ -18,7 +21,7 @@ class Meeting(models.Model):
     password = models.CharField(max_length=100)  # Mot de passe de la réunion
     created_at = models.DateTimeField(auto_now_add=True)  # Date de création
     users = models.ManyToManyField(User, related_name='channels')
-    host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hosted_meeting', null=True, blank=True) 
+    host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hosted_meeting', blank=True) 
     host_users = models.ManyToManyField(User, related_name='hosted_users', blank=True) 
     def __str__(self):
         return self.name
@@ -30,7 +33,7 @@ class Rooms(models.Model):
     host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hosted_rooms')  # L'hôte de la salle
     active = models.BooleanField(default=True)  
     channel = models.ForeignKey(Meeting, on_delete=models.CASCADE, related_name='room', null=True, blank=True) 
-    users = models.ManyToManyField(User, related_name='rooms',   null=True, blank=True) 
+    users = models.ManyToManyField(User, related_name='rooms', blank=True) 
 
     def __str__(self):
         return self.name
@@ -68,20 +71,13 @@ class Chatmessages(models.Model):
 
 
 class ActiveUser(models.Model):
-    user = models.ManyToManyField(User, related_name='active_users',   null=True, blank=True)
+    user = models.ManyToManyField(User, related_name='active_users',   blank=True)
     room_name = models.CharField(max_length=255)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} ({self.room_name})"
     
-
-
-from django.db import models
-from django.contrib.auth.models import User
-
-from django.db import models
-from django.contrib.auth.models import User
 
 class Discussion(models.Model):
     name = models.CharField(max_length=255)
@@ -102,3 +98,73 @@ class DiscussionMessage(models.Model):
     def __str__(self):
         return f"Message from {self.user.username} at {self.created_at}"
 
+
+class SubscriptionPlan(models.Model):
+    name = models.CharField(max_length=50)
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    duration_days = models.IntegerField()  # Durée de l'abonnement
+
+    def __str__(self):
+        return self.name
+
+class UserSubscription(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+
+    def is_active(self):
+        return self.end_date >= now()
+
+    def __str__(self):
+        return f"{self.user.username} - {self.plan.name}"
+
+
+'''class Subscription(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    plan = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=6, decimal_places=2)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+
+    def is_active(self):
+        return self.end_date >= now()'''
+
+
+
+
+
+class Subscription(models.Model):
+   
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    plan = models.CharField(max_length=50, default="free")
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    credit_minutes = models.IntegerField(default=300)  # Free: 5h, Basic: à recharger
+    
+    def is_active(self):
+        return self.end_date is None or self.end_date >= now()
+    
+    def deduct_minutes(self, minutes):
+        if self.plan == "basique":
+            self.credit_minutes = max(0, self.credit_minutes - minutes)
+            self.save()
+    
+    def add_credits(self, minutes):
+        if self.plan == "basic":
+            self.credit_minutes += minutes
+            self.save()
+    
+    def upgrade(self, plan):
+        self.plan = plan
+        if plan.lower() == "illimitee":
+            self.end_date = now() + timedelta(days=30)
+        if plan.lower() == "hebdomadaire":
+            self.end_date = now() + timedelta(days=7)
+        
+        elif plan.lower() == "basique":
+            self.credit_minutes += 600  # Recharge 10h
+        
+        
+        self.save()

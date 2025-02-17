@@ -54,8 +54,12 @@ let lastRecognizedText = '';
 let mediaStream = null;
 
 // Variables pour Agora
+const CHANNEL_NAME = document.getElementById('channelname').value;
+//const meetingPassword = this.getAttribute('data-password');
+//const username = document.getElementById('username').value;
 const APP_ID = "f2891190d713482dbed4c3fd804ec233";
-const CHANNEL_NAME = "channel1";
+console.log("Nom channel: ", CHANNEL_NAME)
+//const CHANNEL_NAME = "channel1";
 let agoraEngine;
 let localAudioTrack;
 let localVideoTrack;
@@ -68,7 +72,7 @@ let microphonebut = document.getElementById("microphonebut");
 let microphoneicon = document.getElementById("microphoneicon");
 
 // Définir une variable globale pour voiceSocket et currentUsername
-//let join stream = null; // Définissez votre socket ici
+//let voiceSocket = null; // Définissez votre socket ici
 //const currentUsername = "votreNomUtilisateur"; // Remplacez-le par la bonne valeur
 
 
