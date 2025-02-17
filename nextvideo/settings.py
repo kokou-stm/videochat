@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-(_r8&+xf5=z(%m55lkj^p52#p87-cna&wf3&44t386iex*(haf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False  
+DEBUG = True  
 
 ALLOWED_HOSTS = ["b5ae-46-193-67-154.ngrok-free.app", "aivoicedubber.com","414f-46-193-67-154.ngrok-free.app", "127.0.0.1"]#, ,"localhost","videoadd.fggbdpcqfnguf4ga.eastus.azurecontainer.io", "aivoicedubber.com"]
 CSRF_TRUSTED_ORIGINS =["https://*.aivoicedubber.com","https://*.b5ae-46-193-67-154.ngrok-free.app", "https://b5ae-46-193-67-154.ngrok-free.app"]#,"https://aivoicedubber.com",  "https://.*aivoicedubber.com"]
@@ -135,15 +135,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+
+
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+print("Root: ", STATIC_ROOT)
+STATICFILES_DIRS = [BASE_DIR / 'static']
+SECURE_CONTENT_TYPE_NOSNIFF = False
 
-# The absolute path to the directory where collectstatic will collect static files for deployment.
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# Additional locations the staticfiles app will traverse if the FileSystemFinder finder is enabled.
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
