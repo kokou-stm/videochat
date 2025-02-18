@@ -798,7 +798,7 @@ chatSocket.onmessage = async function (e) {
                     // Ajouter le message reçu au conteneur
                     console.log("Message1: ", data)
                     const newMessage = document.createElement('div');
-                    newMessage.classList.add(' text-light', 'bg-dark', 'mt-2', 'p-2');
+                    newMessage.classList.add('text-light', 'bg-dark', 'mt-2', 'p-2');
                     newMessage.textContent = `${data.username} : `+ data.message;
 
                     newMessage.style.border = '1px solid white'; // Bordure blanche
