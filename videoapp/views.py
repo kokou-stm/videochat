@@ -30,6 +30,17 @@ from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 from django.http import JsonResponse
 from .models import *
+from paypal.standard.ipn.signals import valid_ipn_received
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from paypal.standard.forms import PayPalPaymentsForm
+
+from paypal.standard.models import ST_PP_COMPLETED
+from paypal.standard.ipn.signals import valid_ipn_received
+from django.dispatch import receiver
+from .models import Subscription
+from django.utils.timezone import now, timedelta
+from django.contrib.auth.models import User
 
 from django.shortcuts import render, redirect
 
@@ -637,63 +648,72 @@ def email_sender(subject, destination, template_path, context, header=None ):
     msg.send()
     print(f"\n message envoyé avec succès à {destination}")
 
+ 
 @login_required
 def create_meeting(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         password = request.POST.get('password')
-        
-        emails = request.POST.get('email')
-        emails = [i.strip() for i in emails.split(",") if i.strip()]
+        emails = request.POST.get('email', '')
+
+        # Nettoyage et séparation des emails (virgules ou espaces)
+        emails = [i.strip() for i in emails.replace(" ", ",").split(",") if i.strip()]
 
         date = request.POST.get('date')
         time = request.POST.get('time')
 
-        if date:
+        # Si une date est fournie, on ajoute aussi l’email de l’hôte
+        if date and request.user.email:
             emails.append(request.user.email)
 
         print('emails: ', emails)
-        current_host = request.META["HTTP_HOST"]
+        current_host = request.get_host()
+        scheme = 'https' if request.is_secure() else 'http'
 
+        # Création de la réunion
         meeting = Meeting.objects.create(
-            name=name, password=password, host=request.user
+            name=name,
+            password=password,
+            host=request.user
         )
         meeting.users.add(request.user)
-        meeting.save()
 
+        # Si une date est planifiée, on met à jour le champ (exemple : created_at)
         if date:
             meeting.created_at = date
             meeting.save()
 
-        Subject = "Invitation pour réunion"
-        heure = f"{date} {time}" if date and time else ""
-        scheme = 'https' if request.is_secure() else 'http'
+        # Construction du lien de réunion
         meeting_url = f"{scheme}://{current_host}/home/{meeting.id}/"
 
-        # Envoi d'email à chaque destinataire
+        # Envoi des invitations par email
+        subject = f"Invitation pour réunion : {meeting.name}"
         for dest in emails:
             context = {
-                "host": request.user.username,
-                "meeting_name": meeting.name,
-                "heure": heure,
-                "meeting_url": meeting_url,
+                "request": request,
+                "meeting": meeting,
+                "date": date,
+                "time": time,
+                "current_host": current_host,
             }
             email_sender(
-                subject=Subject,
+                subject=subject,
                 destination=dest,
                 template_path="emails/invitation.html",
                 context=context
             )
 
+        # Message de confirmation
         if date:
             messages.info(
                 request,
-                f"Réunion planifiée pour {date}, le lien a été envoyé à {request.user.email} et aux invités."
+                f"Réunion planifiée pour le {date} à {time}. "
+                f"Le lien a été envoyé à {request.user.email} et aux invités."
             )
-            return render(request, 'index.html') 
+            return render(request, 'index.html')
 
         return redirect('home', meeting_id=meeting.id)
-    
+
     return render(request, 'create_meeting.html')
 
 
@@ -1359,17 +1379,7 @@ def boat(request):
 
 
 
-from paypal.standard.ipn.signals import valid_ipn_received
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-from paypal.standard.forms import PayPalPaymentsForm
 
-from paypal.standard.models import ST_PP_COMPLETED
-from paypal.standard.ipn.signals import valid_ipn_received
-from django.dispatch import receiver
-from .models import Subscription
-from django.utils.timezone import now, timedelta
-from django.contrib.auth.models import User
 
 
 
