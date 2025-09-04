@@ -66,6 +66,7 @@
                 <h5 class="card-title"></h5>
                 <form action="{% url 'login' %}" method="post">
                   {% csrf_token %}
+                   <input type="hidden" name="next" value="{{ next }}">
                   <div class="input-group mt-5">
                     <div class="input-group-prepend">
                       <span class="input-group-text" id="basic-addon1"><i class="fas fa-at pb-2"></i></span>

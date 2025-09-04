@@ -213,16 +213,45 @@ let remoteTracks = {}
 let microphonebut = document.getElementById("microphonebut");
 let microphoneicon = document.getElementById("microphoneicon");
 
-document.getElementById('join-btn').addEventListener('click', async () => {
-    config.uid = document.getElementById('username').value
-    await joinStreams(channel_name)
-    document.getElementById('join-wrapper').style.display = 'none'
-    
-     
-    
-    document.getElementById('footer').style.display = 'flex'
-    document.getElementById('bottom-bar').style.display = 'flex'
-})
+ 
+ 
+document.getElementById('join-btn').addEventListener('click', async (event) => {
+    const input_username = document.getElementById('username');
+    const usernameValue = input_username.value.trim();
+    console.log("Username:", usernameValue);
+
+    if (!usernameValue) {
+        // Afficher le popup
+        Swal.fire({
+            title: 'Rejoindre anonymement ?',
+            text: "Vous n'avez pas défini de nom d'utilisateur. Voulez-vous rejoindre l'appel en anonyme ?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Oui, continuer',
+            cancelButtonText: 'saisir un nom'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                // Continuer en anonyme
+                config.uid = "Anonyme"; // ou laisse vide selon ton besoin
+                await joinStreams(channel_name);
+                document.getElementById('join-wrapper').style.display = 'none';
+                document.getElementById('footer').style.display = 'flex';
+                document.getElementById('bottom-bar').style.display = 'flex';
+            } else {
+                // Reste sur la page, rien ne se passe
+                return;
+            }
+        });
+    } else {
+        // Username défini → rejoindre directement
+        config.uid = usernameValue;
+        await joinStreams(channel_name);
+        document.getElementById('join-wrapper').style.display = 'none';
+        document.getElementById('footer').style.display = 'flex';
+        document.getElementById('bottom-bar').style.display = 'flex';
+    }
+});
+ 
 
 document.getElementById('mic-btn').addEventListener('click', async () => {
     //Check if what the state of muted currently is

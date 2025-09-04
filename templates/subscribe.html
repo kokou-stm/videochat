@@ -194,7 +194,7 @@
 							{% if plan.name == 'Gratuit' %}
 							<a href="{% url 'gratos' %}" class="price_btn">Free</a>
 							 {% else %}
-							 <a href="{% url 'paiement_paypal' plan.name plan.price %}" class="price_btn">Order Now</a>
+							 <a href="{% url 'paiement_paypal' plan.name plan.price %}" class="price_btn">Essai Gratuit</a>
 							{% endif %}
 						</div>
 					</div>

@@ -111,15 +111,17 @@ def generate_agora_token(request, channel_name):
     print("="*10, "token", "="*10)
     return JsonResponse({'token': token})
 
-@login_required
+#@login_required
 def index(request):
     discussions = Discussion.objects.all()
-    
-    subscription, created = Subscription.objects.get_or_create(user=request.user)
-    '''except Subscription.DoesNotExist:
-        subscription = Subscription.objects.create(user=request.user)'''
-    print("Discu: ", subscription.plan, subscription.credit_minutes)
-    return render(request, "index.html", {"discussions": discussions,"subscription": subscription})
+    context = {"discussions": discussions}
+    if request.user.is_authenticated:
+        subscription, created = Subscription.objects.get_or_create(user=request.user)
+        '''except Subscription.DoesNotExist:
+            subscription = Subscription.objects.create(user=request.user)'''
+        print("Discu: ", subscription.plan, subscription.credit_minutes)
+        context.update({"subscription": subscription})
+    return render(request, "index.html", context=context)
    
 
 @login_required
@@ -157,7 +159,7 @@ def forgotpassword(request):
                uid = urlsafe_base64_encode(force_bytes(user.id))
                current_host = request.META["HTTP_HOST"]
                
-               Subject = "Password Reset VideoCall "
+               Subject = "Password Reset ItrustCall "
                
                code_message= f"""
                     <!DOCTYPE html>
@@ -249,7 +251,7 @@ def forgotpassword(request):
                             </p>
                             <div class="footer">
                                 <p>Thanks,
-                                  VideoCall Authentication.</p>
+                                  ItrustCall Authentication.</p>
                             </div>
                         </div>
                         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -264,7 +266,7 @@ def forgotpassword(request):
                
                '''email = EmailMessage(Subject,
                              message,
-                             f"VideoCall <{settings.EMAIL_HOST}>",
+                             f"ItrustCall <{settings.EMAIL_HOST}>",
                              [user.email])
 
                email.send()'''
@@ -435,7 +437,7 @@ def register(request):
                     emailsender(subject, email_message, user.email)
                     '''email = EmailMessage(subject,
                              email_message,
-                             f"VideoCall <{settings.EMAIL_HOST}>",
+                             f"ItrustCall <{settings.EMAIL_HOST}>",
                              [user.email])
 
                     email.send()'''
@@ -549,13 +551,17 @@ def connection(request):
                     
                     # Authentification et gestion de session
                     login(request, auth_user)
+
                     
                     # Gérer la durée de la session
                     if remember_me:  # Si "Se souvenir de moi" est coché
                         request.session.set_expiry(settings.SESSION_COOKIE_AGE)  # 30 jours
                     else:
                         request.session.set_expiry(0)  # Expire à la fermeture du navigateur
-                    
+                    next_url = request.POST.get('next') or request.GET.get('next')
+                    print("Next url: ", next_url)
+                    if next_url:
+                        return redirect(next_url)
                     return redirect("index")
                 else:
                     mess = "Incorrect password"
@@ -564,7 +570,10 @@ def connection(request):
             
         messages.info(request, mess)
 
-    return render(request, template_name="login.html")
+    return render(request, "login.html", {
+    "next": request.GET.get("next", "")
+})
+
 
 
 def code(request):
@@ -595,118 +604,98 @@ def code(request):
 def deconnexion(request):
          print("Deconnexion")
          logout(request)
-         return redirect("index")
+         return redirect("login")
     
 
 
 
+from django.conf import settings
+ 
+import ssl, certifi
+ssl_context = ssl.create_default_context(cafile=certifi.where())
+
+
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+
+def email_sender(subject, destination, template_path, context, header=None ):
+    print("Envoi d'Email")
+    template = render_to_string(
+        template_path,
+        context
+    )
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body="",
+        from_email=f"ItrustCall <{settings.EMAIL_HOST_USER}>",
+        to=[destination],
+        headers=header
+    )
+
+    msg.attach_alternative(template, "text/html")
+    msg.send()
+    print(f"\n message envoyé avec succès à {destination}")
+
+@login_required
 def create_meeting(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         password = request.POST.get('password')
         
-        emails =  request.POST.get('email')
-        emails = [i for i in emails.split(",")]
+        emails = request.POST.get('email')
+        emails = [i.strip() for i in emails.split(",") if i.strip()]
 
         date = request.POST.get('date')
         time = request.POST.get('time')
-         
+
         if date:
             emails.append(request.user.email)
+
         print('emails: ', emails)
         current_host = request.META["HTTP_HOST"]
-        # Créer une réunion avec le nom et mot de passe fournis
-        meeting = Meeting.objects.create(name=name, password=password, host=request.user )
+
+        meeting = Meeting.objects.create(
+            name=name, password=password, host=request.user
+        )
         meeting.users.add(request.user)
-        meeting.save() 
+        meeting.save()
+
         if date:
             meeting.created_at = date
             meeting.save()
 
-        Subject = "Invitation pour reunion"
-        heure = f"{date} {time}"
-        if not heure:
-            heure =""
-        html = f"""
-        <!DOCTYPE html>
-        <html lang="fr">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Invitation à une réunion</title>
-            <style>
-                body {{
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 0;
-                    background-color: #f4f4f4;
-                }}
-                .email-container {{
-                    background-color: #ffffff;
-                    max-width: 600px;
-                    margin: 20px auto;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                }}
-                h1 {{
-                    color: #007bff;
-                    text-align: center;
-                }}
-                .content {{
-                    font-size: 16px;
-                    color: #333333;
-                    margin-bottom: 20px;
-                }}
-                .button {{
-                    display: inline-block;
-                    background-color: #007bff;
-                    color: white;  /* Texte en blanc */
-                    padding: 10px 20px;
-                    border-radius: 5px;
-                    text-decoration: none;
-                    font-size: 16px;
-                    text-align: center;
-                }}
-                .button:hover {{
-                    background-color: #0056b3; /* Changer la couleur du bouton au survol */
-                }}
-                .footer {{
-                    font-size: 14px;
-                    color: #777777;
-                    text-align: center;
-                    margin-top: 30px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="email-container">
-                <h1>Invitation à une Réunion VideoCall</h1>
-                <div class="content">
-                    <p>Bonjour,</p>
-                    <p>{request.user.username }Vous invité(e) à rejoindre prochainement la réunion {meeting.name} sur <strong>VideoCall</strong>.</p>
-                    <p>Pour rejoindre la réunion, cliquez simplement sur le bouton ci-dessous à {heure}</p>
-                    <a href="https://www.videocall.com/reunion/123456" class="button">Rejoindre la Réunion</a>
-                    <p>{current_host}/home/{meeting.id}/</p>
-                </div>
-                <div class="footer">
-                    <p>Nous avons hâte de vous retrouver sur VideoCall.</p>
-                    <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        Subject = "Invitation pour réunion"
+        heure = f"{date} {time}" if date and time else ""
+        scheme = 'https' if request.is_secure() else 'http'
+        meeting_url = f"{scheme}://{current_host}/home/{meeting.id}/"
 
-        group_emailsender(Subject,html, emails )
+        # Envoi d'email à chaque destinataire
+        for dest in emails:
+            context = {
+                "host": request.user.username,
+                "meeting_name": meeting.name,
+                "heure": heure,
+                "meeting_url": meeting_url,
+            }
+            email_sender(
+                subject=Subject,
+                destination=dest,
+                template_path="emails/invitation.html",
+                context=context
+            )
+
         if date:
-            meeting.created_at = date
-            meeting.save()
-            messages.info(request, f"Reunion planifie pour {date}, nous vous avons envoyé le lien à votre adresse mail {request.user.email} ansi qu'a tous les invités")
+            messages.info(
+                request,
+                f"Réunion planifiée pour {date}, le lien a été envoyé à {request.user.email} et aux invités."
+            )
             return render(request, 'index.html') 
+
         return redirect('home', meeting_id=meeting.id)
-        #return redirect('join_meeting', meeting_id=meeting.id)
+    
     return render(request, 'create_meeting.html')
+
 
 
 @login_required
@@ -740,7 +729,7 @@ def gratos(request):
     meeting = Meeting.objects.create(name=f"{request.user.username}_home", password="1234", host=request.user )
     return redirect('home', meeting_id=meeting.id)
 
-@login_required
+#@login_required
 def home(request, meeting_id=None):
     
     if meeting_id:
@@ -870,7 +859,7 @@ def create_discussion(request):
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Invitation la une Discussion {name} sur VideoCall</title>
+                <title>Invitation la une Discussion {name} sur ItrustCall</title>
                 <style>
                     body {{
                         font-family: Arial, sans-serif;
@@ -924,10 +913,10 @@ def create_discussion(request):
             </head>
             <body>
                 <div class="email-container">
-                    <h1>Invitation à une Réunion VideoCall</h1>
+                    <h1>Invitation à une Réunion ItrustCall</h1>
                     <div class="content">
                         <p>Bonjour,</p>
-                        <p><strong>{request.user}</strong> vous invite à rejoindre la discussion <strong>{discussion.name}</strong> sur <strong>VideoCall</strong>.</p>
+                        <p><strong>{request.user}</strong> vous invite à rejoindre la discussion <strong>{discussion.name}</strong> sur <strong>ItrustCall</strong>.</p>
                         <p>Pour rejoindre la réunion, veuillez cliquer sur le bouton ci-dessous :</p>
                         <a href="https://www.videocall.com/reunion/123456" class="button">Rejoindre la Discussion</a>
                         <p>Si le lien ne fonctionne pas, copiez et collez l'adresse suivante dans votre navigateur :</p>
@@ -935,7 +924,7 @@ def create_discussion(request):
                         <p>{current_host}/discussion/{discussion.id}/</p>
                     </div>
                     <div class="footer">
-                        <p>Nous avons hâte de vous retrouver sur VideoCall.</p>
+                        <p>Nous avons hâte de vous retrouver sur ItrustCall.</p>
                         <p>Si vous avez des questions, n'hésitez pas à <a href="mailto:support@videocall.com">nous contacter</a>.</p>
                     </div>
                 </div>
@@ -1146,35 +1135,71 @@ def ask_ia(request):
 
 import openai
 
-def chat(question):
-    openai.api_type = "azure"
-    openai.api_key = "6xv3rz6Asc5Qq86B8vqjhKQzSTUZPmCcSuDm5CLEV5dj9m8gTHlNJQQJ99AKACYeBjFXJ3w3AAABACOGyHXT"
-    openai.api_base = "https://chatlearning.openai.azure.com/"  # Remplacez par votre URL Azure
-    openai.api_version = "2023-12-01-preview"
+# def chat(question):
+#     openai.api_type = "azure"
+#     openai.api_key = "6xv3rz6Asc5Qq86B8vqjhKQzSTUZPmCcSuDm5CLEV5dj9m8gTHlNJQQJ99AKACYeBjFXJ3w3AAABACOGyHXT"
+#     openai.api_base = "https://chatlearning.openai.azure.com/"  # Remplacez par votre URL Azure
+#     openai.api_version = "2023-12-01-preview"
 
-    prompt = (
-       f"Tu es un concepteur pour repondre aux questions des utilisateurs sur ton application d'appel video capable \n\n"
-        f"de fournir de faire l'appel video dans différentes langues en traduisant les voix des utilisateurs par des\n\n "
-        f"voix artificielles.\n\n"
-        f"L'étudiant pose la question suivante : {question}\n\n"
-        f"Fournissez une réponse détaillée, pratique et facile à comprendre, comme si vous étiez l'assistant pour le support "
-        f"Répondez en français."
-    )
+#     prompt = (
+#        f"Tu es un concepteur pour repondre aux questions des utilisateurs sur ton application d'appel video capable \n\n"
+#         f"de fournir de faire l'appel video dans différentes langues en traduisant les voix des utilisateurs par des\n\n "
+#         f"voix artificielles.\n\n"
+#         f"L'étudiant pose la question suivante : {question}\n\n"
+#         f"Fournissez une réponse détaillée, pratique et facile à comprendre, comme si vous étiez l'assistant pour le support "
+#         f"Répondez en français."
+#     )
 
-    # Appel à l'API GPT
-    response = openai.ChatCompletion.create(
-        engine="gpt-35-turbo",  # Remplacez par le nom de votre déploiement Azure
-        messages=[
-            {"role": "system", "content": "Vous êtes un expert en cuisine et un instructeur professionnel."},
-            {"role": "user", "content": prompt},
-        ]
-    )
+#     # Appel à l'API GPT
+#     response = openai.ChatCompletion.create(
+#         engine="gpt-35-turbo",  # Remplacez par le nom de votre déploiement Azure
+#         messages=[
+#             {"role": "system", "content": "Vous êtes un expert en cuisine et un instructeur professionnel."},
+#             {"role": "user", "content": prompt},
+#         ]
+#     )
 
-    return response['choices'][0]['message']['content']
-
-
+#     return response['choices'][0]['message']['content']
 
 
+from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
+llm = AzureChatOpenAI(
+    openai_api_version="2024-07-01-preview",
+    deployment_name="gpt-35-turbo-chefquiz",
+    openai_api_key=settings.AZURE_OPENAI_API_KEY,
+    openai_api_type="azure",
+    azure_endpoint="https://realtimekokou.openai.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2024-08-01-preview",
+)
+
+
+
+from langchain_openai import AzureChatOpenAI
+from langchain.schema import HumanMessage
+
+# # Initialisation du modèle Azure OpenAI
+# llm = AzureChatOpenAI(
+#     openai_api_version="2024-07-01-preview",
+#     deployment_name="gpt-35-turbo-chefquiz",
+#     openai_api_key=settings.AZURE_OPENAI_API_KEY,
+#     openai_api_type="azure",
+#     azure_endpoint="https://realtimekokou.openai.azure.com",
+# )
+
+def chat(question: str) -> str:
+    """
+    Fonction de chat avec AzureChatOpenAI.
+    
+    Args:
+        user_message (str): Message de l'utilisateur.
+    
+    Returns:
+        str: Réponse générée par le modèle.
+    """
+    response = llm.invoke([HumanMessage(content=question)])
+    return response.content
+
+
+ 
 
 def upload_file(request):
     if request.method == 'POST' and request.FILES['file']:
@@ -1206,7 +1231,7 @@ def emailsender(Subject, html, user_email):
     # on ajoute un sujet
     message["Subject"] = Subject
     # un émetteur
-    message["From"] = f"VideoCall <{email_address}>"
+    message["From"] = f"ItrustCall <{email_address}>"
     # un destinataire
     message["To"] = user_email
     # on crée deux éléments MIMEText 
@@ -1238,7 +1263,7 @@ def group_emailsender(Subject, html, user_emails):
     # on ajoute un sujet
     message["Subject"] = Subject
     # un émetteur
-    message["From"] = f"VideoCall <{email_address}>"
+    message["From"] = f"ItrustCall <{email_address}>"
     
     # Destinataires multiples
     message["To"] = ", ".join(user_emails)  # On joint les emails par une virgule
@@ -1268,7 +1293,7 @@ def emailsender_contact(Subject, html, email_address,  user_email, contact = Non
     # on ajoute un sujet
     message["Subject"] = Subject
     # un émetteur
-    message["From"] = f"VideoCall <{email_address}>"
+    message["From"] = f"ItrustCall <{email_address}>"
     # un destinataire
     
     if contact:
@@ -1499,19 +1524,26 @@ plans_paypal = [
 
 
 def abonnement_view(request):
-    
-    try:
-        subscription = Subscription.objects.get(user=request.user)
-        current_plan = subscription.plan  # Supposons que Subscription a un champ `plan`
-    except Subscription.DoesNotExist:
-        subscription = None
-        current_plan = "free"
+    if request.user.is_authenticated:
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+            current_plan = subscription.plan  # Supposons que Subscription a un champ `plan`
+        except Subscription.DoesNotExist:
+            subscription = None
+            current_plan = "free"
 
-    return render(request, "subscribe.html", {
-        "plans": plans_paypal,
-        "subscription": subscription,
-        "current_plan": current_plan
-    })
+        return render(request, "subscribe.html", {
+            "plans": plans_paypal,
+            "subscription": subscription,
+            "current_plan": current_plan
+        })
+    else:
+         return render(request, "subscribe.html", {
+            "plans": plans_paypal,
+            # "subscription": subscription,
+            # "current_plan": current_plan
+        })
+
 
 
 def subscription_view(request):
@@ -1523,9 +1555,9 @@ def subscription_view(request):
     return render(request, "subscriptions.html", {"subscription": subscription})
 
 
-
+@login_required
 def paiement_paypal(request, plan, montant):
-  
+     
     # Assurez-vous que le plan est valide et dans la liste
     if plan not in ['Gratuit', 'Basique', 'hebdomadaire', 'illimitee']:
         return render(request, "erreur.html", {"message": "Plan invalide"})
@@ -1533,7 +1565,7 @@ def paiement_paypal(request, plan, montant):
     paypal_dict = {
         "business": settings.PAYPAL_RECEIVER_EMAIL,
         "amount": montant,
-        "item_name": f"VideoCall Crédit {montant}€",
+        "item_name": f"ItrustCall Crédit {montant}€",
         "invoice": f"Payment{request.user.id}{montant}{int(now().timestamp())}",
         "currency_code": "EUR",
         "notify_url": request.build_absolute_uri("/paypal-ipn/"),
@@ -1545,7 +1577,7 @@ def paiement_paypal(request, plan, montant):
     # Pour les plans d'abonnement, nous ajoutons des options spécifiques
     if plan in ['hebdomadaire', 'illimitee']:
         paypal_dict["cmd"] = "_xclick-subscriptions"
-        paypal_dict["item_name"] = f"VideoCall Crédit {plan.capitalize()} Plan"
+        paypal_dict["item_name"] = f"ItrustCall Crédit {plan.capitalize()} Plan"
         paypal_dict["invoice"] = f"INV-{plan}-{request.user.id}-{now().timestamp()}"
         paypal_dict["a3"] = montant  # Le montant par période
         paypal_dict["p3"] = 1  # Période de facturation (1 signifie hebdomadaire ou mensuel selon t3)
