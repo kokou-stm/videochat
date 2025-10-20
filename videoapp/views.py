@@ -1365,7 +1365,9 @@ def emailsender_contact(Subject, html, email_address,  user_email, contact = Non
 
 
 
-from langchain_huggingface import HuggingFaceEmbeddings
+#from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
+
 
 # openai.api_key ="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"
 # os.environ["OPENAI_API_KEY"] ="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"
