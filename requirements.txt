@@ -20,4 +20,6 @@ PyPDF2
 python-dotenv 
 tiktoken 
 tqdm 
+langchain-text-splitters
+
 

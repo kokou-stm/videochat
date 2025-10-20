@@ -88,6 +88,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 from langchain.chains import RetrievalQA,  ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain_openai import OpenAI, ChatOpenAI
