@@ -10,11 +10,13 @@ langchain
 langchain-community 
 langchain-openai 
 langchain-text-splitters 
+langchain-huggingface
 langsmith 
 openai
 pillow 
 psycopg 
 psycopg-binary 
+
 pypdf 
 PyPDF2 
 python-dotenv 
