@@ -10,7 +10,7 @@ langchain
 langchain-community 
 langchain-openai 
 langchain-text-splitters 
-langchain-huggingface
+tokenizers==0.19.1
 langsmith 
 openai
 pillow 
