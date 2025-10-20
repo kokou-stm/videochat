@@ -11,6 +11,8 @@ langchain-community
 langchain-openai 
 langchain-text-splitters 
 tokenizers==0.19.1
+torch==2.0.1
+sentence-transformers
 langsmith 
 openai
 pillow 
