@@ -136,7 +136,7 @@ https://templatemo.com/tm-569-edu-meeting
           <nav class="main-nav">
             <!-- ***** Logo Start ***** -->
             <a href="{% url 'index' %}" class="logo merriweather">
-              ItrustCall
+              Yomla
             </a>
             <!-- ***** Logo End ***** -->
             <!-- ***** Menu Start ***** -->
@@ -176,9 +176,11 @@ https://templatemo.com/tm-569-edu-meeting
 
                   <li><a href="{% url 'subscribe' %}">Plus de credit </a></li>
                   <li><a href="{% url 'profile' %}">Edit Profile </a></li>
-
+                 {% if user.is_authenticated %}
                   <li><a href="{% url 'logout' %}">Deconnexion</a></li>
-
+                  {%else%}
+                  <li><a href="{% url 'login' %}">Connexion</a></li>
+                 {% endif %}
                 </ul>
               </li>
 
@@ -234,11 +236,11 @@ https://templatemo.com/tm-569-edu-meeting
           <div class="col-lg-12">
             <div class="caption">
               <h6>Bienvenue {{request.user.username}}</h6>
-              <h2 class="merriweather">Rejoignez-nous pour des appels vidéo</h2>
+              <h2 class="merriweather">Rejoignez-nous pour des Visios </h2>
               <h5 class="roboto text-light">Discuttez en visionconférence avec n'importe qui dans n'importe quelle
                 langue
                 <br> <a rel="nofollow" href="" target="">Plus de 5 langues</a> pris en charge par <a rel="nofollow"
-                  href="" target=""> ItrustCall</a>.
+                  href="" target=""> Yomla</a>.
               </h5>
               <div class="main-button-red1 ">
                 <div class="scroll-to-section1">
@@ -348,112 +350,191 @@ https://templatemo.com/tm-569-edu-meeting
     }
   </style>
 
-
-  <!-- Modal pour créer une discussion  -->
-  <div class="modal fade" id="creatediscussionModal" tabindex="-1" aria-labelledby="creatediscussionModal"
-    aria-hidden="true">
+<!-- Modal pour créer une discussion -->
+<div class="modal fade" id="creatediscussionModal" tabindex="-1" aria-labelledby="creatediscussionModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title roboto" id="creatediscussionModalLabel">Rejoindre ou creer une discussion</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title roboto" id="creatediscussionModalLabel">Rejoindre ou créer une discussion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Recherche de discussions -->
+                <div class="mb-3">
+                    <label for="search-input" class="form-label merriweather">Rechercher une discussion</label>
+                    <br>
+                    <input type="text" id="search-input" class="form-control roboto" placeholder="Rechercher par nom...">
+                </div>
+
+                <!-- Liste des discussions -->
+                <div class="mb-2">
+                    <div id="discussion-container" style="max-height: 300px; overflow-y: auto; padding: 0;">
+                        {% for discussion in discussions %}
+                        <div class="discussion-item d-flex align-items-center p-3 mb-3 rounded searchable"
+                             style="background-color: #2d3436; cursor: pointer; border-radius: 15px; transition: all 0.2s ease;"
+                             data-name="{{ discussion.name|lower }}">
+                            <!-- Logo/Icône de la discussion -->
+                            <div class="discussion-icon me-3 d-flex align-items-center justify-content-center rounded"
+                                 style="width: 60px; height: 60px; background-color: {% cycle '#a29bfe' '#fab1a0' '#fdcb6e' '#74b9ff' '#fd79a8' '#00b894' '#e17055' '#81ecec' %}; flex-shrink: 0;">
+                                <i class="fas fa-users" style="color: white; font-size: 20px;"></i>
+                            </div>
+                            <!-- Nom de la discussion -->
+                            <div class="flex-grow-1">
+                                <span class="merriweather text-white fw-bold" style="font-size: 16px;">{{ discussion.name }}</span>
+                            </div>
+                            <!-- Boutons -->
+                            <div class="ms-2 d-flex align-items-center">
+                                <a href="{% url 'discussion' discussion.id %}" class="btn btn-sm btn-primary me-2">
+                                    <i class="fas fa-chevron-right" style="font-size: 14px;"></i>
+                                </a>
+                                {% if discussion.created_by == request.user %}
+                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" 
+                                        data-bs-target="#deleteDiscussionModal{{ discussion.id }}"
+                                        aria-label="Supprimer la discussion">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                            <!-- Flèche optionnelle -->
+                            <div class="ms-2">
+                                <i class="fas fa-chevron-right" style="color: #74b9ff; font-size: 14px;"></i>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Séparateur -->
+                <div class="or-separator merriweather">
+                    <span>OU</span>
+                </div>
+
+                <!-- Formulaire de création de discussion -->
+                <form method="POST" action="{% url 'create_discussion' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label roboto">Nom de la discussion</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3 roboto">
+                        <label for="email" class="form-label">Inviter par mail</label>
+                        <input type="text" class="form-control" id="email" name="email"
+                               placeholder="exemple@domain.com + 'Entrez'" required>
+                        <div id="email-list" class="mt-2"></div>
+                        <input type="hidden" name="emails" id="emails">
+                    </div>
+                    <div class="text-end roboto">
+                        <button type="submit" class="btn btn-primary">Créer -></button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="modal-body">
-
-
-          <div class="mb-3">
-            <label for="name" class="form-label merriweather">Rechercher une discussion</label>
-            <br>
-            <input type="text" id="search-input" class="roboto" placeholder="Rechercher par nom...">
-          </div>
-
-          <div class="mb-2">
-            <div id="discussion-container" style="max-height: 300px; overflow-y: auto; padding: 0;">
-              {% for discussion in discussions %}
-              <div class="discussion-item d-flex align-items-center p-3 mb-3 rounded searchable"
-                style="background-color: #2d3436; cursor: pointer; border-radius: 15px; transition: all 0.2s ease;"
-                data-name="{{ discussion.name|lower }}"
-                onclick="window.location.href='{% url 'discussion' discussion.id %}'">
-
-                <!-- Logo/Icône de la discussion -->
-                <div class="discussion-icon me-3 d-flex align-items-center justify-content-center rounded"
-                  style="width: 60px; height: 60px; background-color: {% cycle '#a29bfe' '#fab1a0' '#fdcb6e' '#74b9ff' '#fd79a8' '#00b894' '#e17055' '#81ecec' %}; flex-shrink: 0;">
-                  <i class="fas fa-users" style="color: white; font-size: 20px;"></i>
-                </div>
-
-                <!-- Nom de la discussion -->
-                <div class="flex-grow-1">
-                  <span class="merriweather text-white fw-bold" style="font-size: 16px;">{{ discussion.name }}</span>
-                </div>
-
-                <!-- Flèche optionnelle -->
-                <div class="ms-2">
-                  <i class="fas fa-chevron-right" style="color: #74b9ff; font-size: 14px;"></i>
-                </div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-
-          <script>
-            // Fonction de recherche dans la liste des discussions
-            document.getElementById('search-input').addEventListener('input', function () {
-              const searchTerm = this.value.toLowerCase();
-              const discussionItems = document.querySelectorAll('.searchable');
-
-              discussionItems.forEach(function (item) {
-                const discussionName = item.getAttribute('data-name');
-                if (discussionName.includes(searchTerm)) {
-                  item.style.display = 'flex';
-                } else {
-                  item.style.display = 'none';
-                }
-              });
-            });
-
-            // Effet hover
-            document.querySelectorAll('.discussion-item').forEach(function (item) {
-              item.addEventListener('mouseenter', function () {
-                this.style.backgroundColor = '#636e72';
-              });
-
-              item.addEventListener('mouseleave', function () {
-                this.style.backgroundColor = '#2d3436';
-              });
-            });
-          </script>
-
-          <div class="or-separator merriweather ">
-            <span>OU</span>
-          </div>
-
-
-
-          <form method="POST" action="{% url 'create_discussion' %}">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label for="name" class="form-label roboto">Nom de la discussion</label>
-              <input type="text" class="form-control" id="name" name="name" required>
-            </div>
-            <div class="mb-3 roboto">
-              <label for="email" class="form-label ">Inviter par mail</label>
-              <input type="text" class="form-control" id="email" name="email"
-                placeholder="exemple@domain.com + 'Entrez' " required>
-              <div id="email-list" class="mt-2"></div> <!-- Zone pour afficher les emails sous forme de bulles -->
-              <input type="hidden" name="emails" id="emails">
-            </div>
-            <div class="text-end roboto">
-              <button type="submit" class="btn btn-primary">Créer -></button>
-            </div>
-          </form>
-
-
-
-
-        </div>
-      </div>
     </div>
-  </div>
+</div>
+
+<!-- Modals de confirmation de suppression (placés à l'extérieur du modal principal) -->
+{% for discussion in discussions %}
+<div class="modal fade" id="deleteDiscussionModal{{ discussion.id }}" tabindex="-1" 
+     aria-labelledby="deleteDiscussionModalLabel{{ discussion.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title roboto" id="deleteDiscussionModalLabel{{ discussion.id }}">
+                    Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body roboto">
+                Êtes-vous sûr de vouloir supprimer la discussion "{{ discussion.name }}" ? 
+                Cette action est irréversible.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger confirm-delete" 
+                        data-discussion-id="{{ discussion.id }}"
+                        data-url="{% url 'delete_discussion' discussion.id %}">
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- JavaScript pour la recherche et la suppression -->
+<script>
+    // Fonction de recherche dans la liste des discussions
+    document.getElementById('search-input').addEventListener('input', function () {
+        const searchTerm = this.value.toLowerCase();
+        const discussionItems = document.querySelectorAll('.searchable');
+
+        discussionItems.forEach(function (item) {
+            const discussionName = item.getAttribute('data-name');
+            if (discussionName.includes(searchTerm)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+    // Effet hover sur les discussions
+    document.querySelectorAll('.discussion-item').forEach(function (item) {
+        item.addEventListener('mouseenter', function () {
+            this.style.backgroundColor = '#636e72';
+        });
+        item.addEventListener('mouseleave', function () {
+            this.style.backgroundColor = '#2d3436';
+        });
+    });
+
+    // Gestion de l'ouverture du modal de suppression
+    document.querySelectorAll('.btn-danger[data-bs-toggle="modal"]').forEach(button => {
+        button.addEventListener('click', function () {
+            // Ferme le modal principal avant d'ouvrir le modal de suppression
+            const createDiscussionModal = document.getElementById('creatediscussionModal');
+            const bootstrapModal = bootstrap.Modal.getInstance(createDiscussionModal);
+            if (bootstrapModal) {
+                bootstrapModal.hide();
+            }
+        });
+    });
+
+    // Gestion de la suppression via AJAX
+    document.querySelectorAll('.confirm-delete').forEach(button => {
+        button.addEventListener('click', function () {
+            const discussionId = this.getAttribute('data-discussion-id');
+            const url = this.getAttribute('data-url');
+            const modal = this.closest('.modal');
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Ferme le modal de suppression
+                    bootstrap.Modal.getInstance(modal).hide();
+                    // Supprime l'élément de la discussion du DOM
+                    document.querySelector(`.discussion-item[data-name="${data.discussion_name.toLowerCase()}"]`).remove();
+                    // Affiche un message de succès
+                    alert(data.message); // Remplaçable par un toast
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur est survenue lors de la suppression.');
+            });
+        });
+    });
+</script>
+
   <!-- Modal pour créer une réunion -->
   <div class="modal fade" id="createMeetingModal" tabindex="-1" aria-labelledby="createMeetingModalLabel"
     aria-hidden="true">
@@ -617,7 +698,7 @@ https://templatemo.com/tm-569-edu-meeting
 
             <div class="item">
               <div class="col">
-                <button class=" btn btn-success rounded-circle p-3 bnt-large text-light" style="" data-bs-toggle="modal"
+                <button class=" btn btn-primary rounded-circle p-3 bnt-large text-light" style="" data-bs-toggle="modal"
                   data-bs-target="#createMeetingModal">
                   <i class="fas fa-video" style="font-size: 2em;"></i>
 
@@ -627,7 +708,7 @@ https://templatemo.com/tm-569-edu-meeting
               </div>
               <div class="down-content">
 
-                <h4><button class=" btn btn-outline-light  p-3 bnt-large  " style="" data-bs-toggle="modal"
+                <h4><button class=" btn btn-light  p-3 bnt-large  " style="" data-bs-toggle="modal"
                     data-bs-target="#createMeetingModal">
                     <h6 class="mt-2"><strong>Rencontrer</strong> </h6>
                   </button></h4>
@@ -638,7 +719,7 @@ https://templatemo.com/tm-569-edu-meeting
             <div class="item">
               <div class="col">
 
-                <button class="btn btn-primary rounded-circle p-3 bnt-large  " data-bs-toggle="modal"
+                <button class="btn btn-light rounded-circle p-3 bnt-large  " data-bs-toggle="modal"
                   data-bs-target="#joinMeetingModal">
                   <i class="fas fa-user-plus" style="font-size: 2em;"></i>
 
@@ -647,7 +728,7 @@ https://templatemo.com/tm-569-edu-meeting
 
               </div>
               <div class="down-content">
-                <h4> <button class="btn btn-outline-light  p-3 bnt-large  " data-bs-toggle="modal"
+                <h4> <button class="btn btn-primary  p-3 bnt-large  " data-bs-toggle="modal"
                     data-bs-target="#joinMeetingModal">
                     <h6 class="mt-2"> <strong>Rejoindre une reunion</strong></h6>
                     
@@ -667,7 +748,7 @@ https://templatemo.com/tm-569-edu-meeting
 
               </div>
               <div class="down-content">
-                <h4> <button class="btn btn-outline-light  p-3 bnt-large  " data-bs-toggle="modal"
+                <h4> <button class="btn btn-primary  p-3 bnt-large  " data-bs-toggle="modal"
                     data-bs-target="#scheduleMeetingModal">
                     <h6 class="mt-2"> <strong>Planifier</strong></h6>
 
@@ -1091,7 +1172,7 @@ https://templatemo.com/tm-569-edu-meeting
       </form>
     </div>
     <div class="footer merriweather">
-      <p>Copyright © 2022 ItrustCall Co., Ltd. All Rights Reserved.
+      <p>Copyright © 2022 Yomla Co., Ltd. All Rights Reserved.
         <br>Design: <a href="https://templatemo.com" target="_parent" title="free css templates">Video Call</a>
       </p>
     </div>

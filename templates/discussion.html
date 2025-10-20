@@ -1,5 +1,4 @@
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <!-- Required meta tags -->
@@ -9,59 +8,71 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
+    <!-- Emoji Picker CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1.12.0/index.js" type="module"></script>
     <title>Discussion</title>
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Redressed&family=Merriweather:wght@300;400;700&display=swap");
+      .redressed {
+          font-family: "Redressed", serif;
+      }
+      .merriweather {
+          font-family: "Merriweather", serif;
+      }
+      #chat-box {
+          height: 70vh;
+          overflow-y: auto;
+          padding: 10px;
+      }
+      .message {
+          padding: 10px;
+          margin: 5px;
+          border-radius: 10px;
+          max-width: 60%;
+      }
+      .my-message {
+          background-color: #007bff;
+          color: white;
+          align-self: flex-end;
+          text-align: right;
+          margin-left: auto;
+      }
+      .remote-message {
+          background-color: #f1f1f1;
+          color: black;
+          align-self: flex-start;
+      }
+      #emojiPickerContainer {
+          position: absolute;
+          bottom: 60px;
+          left: 80px; /* Ajusté pour être à côté du bouton emoji */
+          z-index: 1000;
+      }
+      emoji-picker {
+          --background: #f1f1f1;
+          --border-color: #ccc;
+          --category-emoji-size: 1.5rem;
+          --emoji-size: 1.2rem;
+          width: 300px;
+          max-height: 400px;
+          border-radius: 10px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+    </style>
   </head>
 
-  <style>
-     @import url("https://fonts.googleapis.com/css2?family=Redressed&family=Merriweather:wght@300;400;700&display=swap");
-    .redressed {
-        font-family: "Redressed", serif;
-    }
-    .merriweather {
-        font-family: "Merriweather", serif;
-    }
-    #chat-box {
-    height: 70vh;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.message {
-    padding: 10px;
-    margin: 5px;
-    border-radius: 10px;
-    max-width: 60%;
-}
-
-.my-message {
-    background-color: #007bff;
-    color: white;
-    align-self: flex-end;
-    text-align: right;
-    margin-left: auto;
-}
-
-.remote-message {
-    background-color: #f1f1f1;
-    color: black;
-    align-self: flex-start;
-}
-
-
-  </style>
-  
-  <body style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));" >
-    <p style="display: none;"><a class="card-text" id="discussion_name" >{{discussion.name}}</a></p>
-   
+  <body style="background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
+    <p style="display: none;"><a class="card-text" id="discussion_name">{{discussion.name}}</a></p>
 
     <section class="redressed">
         <div class="container mt-5 text-light">
             <div class="row">
-                <!-- Bouton pour afficher/masquer la liste des utilisateurs (visible uniquement sur mobile) -->
+                <!-- Bouton pour afficher/masquer la liste des utilisateurs (mobile) -->
                 <button class="btn btn-primary d-md-none mb-3" id="toggle-users">
                     ☰ Utilisateurs
                 </button>
-    
+
                 <!-- Sidebar utilisateurs -->
                 <div class="col-lg-2 col-md-2 d-none d-md-block" id="user-sidebar">
                     <div class="card bg-transparent" style="height: 90vh; border: solid white 1px; background: linear-gradient(rgba(0,0,0, 0.5), rgba(0,0,0, 0.5));">
@@ -69,7 +80,7 @@
                         <div class="card-body text-light">
                             <h5 class="card-title">Connectés</h5>
                             <ul id="user-list">
-                                <div class="card-text p-1" style="border: solid 1px white; border-radius: 2em;"> 
+                                <div class="card-text p-1" style="border: solid 1px white; border-radius: 2em;">
                                     <button class="btn btn-outline-light me-1" type="button" style="border-radius: 4em; font-size: 0.5em;">
                                         <i class="fas fa-user"></i>
                                     </button> {{ request.user }}
@@ -78,7 +89,7 @@
                         </div>
                     </div>
                 </div>
-    
+
                 <!-- Zone de chat -->
                 <div class="col-lg-10 col-md-9 col-12">
                     <div class="form-popup" id="myForm" style="z-index: 4550;">
@@ -97,57 +108,55 @@
                                         </select>
                                     </div>
                                 </div>
-    
-                                <div class="card-body" style="max-height: 85vh; min-height: 84vh; ">
+
+                                <div class="card-body" style="max-height: 85vh; min-height: 84vh;">
                                     <div class="bg-light py-1 mb-2 redressed overflow-auto" id="text_chat" style="max-height: 90%; min-height: 88%; border-radius: 0.3em; width: 100%;">
-                                     
-                                            <!-- Messages affichés ici -->
-                                            {% for sms in message_list %}
-                                                {% if sms.username == request.user.username %} 
-                                                    {% if sms.content %}
-                                                        <!-- Message texte de l'utilisateur actuel -->
-                                                        <div class="d-block text-end">
-                                                            <div class="text-light bg-dark mt-2 p-2" style="border: 1px solid white; border-radius: 10px; display: inline-block; max-width: 90%; margin-bottom: 10px;">
-                                                                {{ sms.username }} : {{ sms.content }}
-                                                            </div>
+                                        <!-- Messages affichés ici -->
+                                        {% for sms in message_list %}
+                                            {% if sms.username == request.user.username %}
+                                                {% if sms.content %}
+                                                    <!-- Message texte de l'utilisateur actuel -->
+                                                    <div class="d-block text-end">
+                                                        <div class="text-light bg-dark mt-2 p-2" style="border: 1px solid white; border-radius: 10px; display: inline-block; max-width: 90%; margin-bottom: 10px;">
+                                                            {{ sms.username }} : {{ sms.content }}
                                                         </div>
-                                                    {% elif sms.file %}
-                                                        <!-- Fichier envoyé par l'utilisateur actuel -->
-                                                        <div class="d-block text-end">
-                                                            <div class="file-message mt-2">
-                                                                <a href="{{ sms.file }}" download class="btn btn-primary" style="margin-top: 5px;">
-                                                                     {{ sms.file_name  }} <i class="fas fa-download"></i>
-                                                                </a>
-                                                            </div>
+                                                    </div>
+                                                {% elif sms.file %}
+                                                    <!-- Fichier envoyé par l'utilisateur actuel -->
+                                                    <div class="d-block text-end">
+                                                        <div class="file-message mt-2">
+                                                            <a href="{{ sms.file }}" download class="btn btn-primary" style="margin-top: 5px;">
+                                                                {{ sms.file_name }} <i class="fas fa-download"></i>
+                                                            </a>
                                                         </div>
-                                                    {% endif %}
-                                                {% else %}
-                                                    {% if sms.content %}
-                                                        <!-- Message texte d'un autre utilisateur -->
-                                                        <div class="d-block text-start">
-                                                            <div class="text-light bg-dark mt-2 p-2" style="border: 1px solid white; border-radius: 10px; display: inline-block; max-width: 90%; margin-bottom: 10px;">
-                                                                {{ sms.username }} : {{ sms.content }}
-                                                            </div>
-                                                        </div>
-                                                    {% elif sms.file %}
-                                                        <!-- Fichier envoyé par un autre utilisateur -->
-                                                        <div class="d-block text-start">
-                                                            <div class="file-message mt-2">
-                                                                <a href="{{ sms.file }}" download class="btn btn-primary" style="margin-top: 5px;">
-                                                                     {{ sms.file_name }} <i class="fas fa-download"></i>
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    {% endif %}
+                                                    </div>
                                                 {% endif %}
-                                            {% endfor %}
-                                       
-                                        
+                                            {% else %}
+                                                {% if sms.content %}
+                                                    <!-- Message texte d'un autre utilisateur -->
+                                                    <div class="d-block text-start">
+                                                        <div class="text-light bg-dark mt-2 p-2" style="border: 1px solid white; border-radius: 10px; display: inline-block; max-width: 90%; margin-bottom: 10px;">
+                                                            {{ sms.username }} : {{ sms.content }}
+                                                        </div>
+                                                    </div>
+                                                {% elif sms.file %}
+                                                    <!-- Fichier envoyé par un autre utilisateur -->
+                                                    <div class="d-block text-start">
+                                                        <div class="file-message mt-2">
+                                                            <a href="{{ sms.file }}" download class="btn btn-primary" style="margin-top: 5px;">
+                                                                {{ sms.file_name }} <i class="fas fa-download"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
                                     </div>
-    
+
                                     <div class="input-group mb-2">
                                         <button id="importButton" class="input-group-text"><i class="fas fa-file-upload"></i></button>
                                         <input type="file" id="fileInput" style="display: none;" />
+                                        <button id="emojiButton" class="input-group-text" aria-label="Ouvrir le sélecteur d'emojis"><i class="fas fa-smile"></i></button>
                                         <input type="text" id="id_message_send_input" class="form-control" placeholder="Message">
                                         <button>
                                             <div class="dropdown redressed">
@@ -165,15 +174,19 @@
                                             <span class="input-group-text"><i class="fas fa-paper-plane"></i></span>
                                         </button>
                                     </div>
-                                </div>  
+                                    <!-- Sélecteur d'emojis -->
+                                    <div id="emojiPickerContainer" style="display: none;">
+                                        <emoji-picker></emoji-picker>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>    
+        </div>
     </section>
-    
+
     <!-- JavaScript pour afficher/masquer la sidebar sur mobile -->
     <script>
         document.getElementById("toggle-users").addEventListener("click", function() {
@@ -181,477 +194,333 @@
             userSidebar.classList.toggle("d-none");
         });
     </script>
-    
 
-
-    <script type="text/javascript">
-       
+    <script>
         const discussion_name = document.getElementById('discussion_name').innerText.trim().toString();
-       const currentUsername = "{{ request.user.username }}";
-       console.log("Bonjour: ", currentUsername)
-</script>
+        const currentUsername = "{{ request.user.username }}";
+        console.log("Bonjour: ", currentUsername);
+    </script>
 
-    
+    <script>
+        const discuss_id = "{{discussion.id}}";
+        const username = "{{ request.user.username }}";
+        const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + discuss_id + '/');
 
-   
-  <script>
-    const discuss_id = "{{discussion.id}}";  // Remplace par une variable dynamique si nécessaire
-    const username = "{{ request.user.username }}";  // Assure-toi que l'utilisateur est connecté
-  
-    const chatSocket = new WebSocket(
-        'wss://' + window.location.host + '/ws/chat/' + discuss_id + '/'
-    );
-  
-    /*chatSocket.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        const chatBox = document.getElementById('chat-box');
-  
-        let messageDiv = document.createElement('div');
-        messageDiv.classList.add('message');
-  
-        if (data.username === username) {
-            messageDiv.classList.add('my-message');  // Message à droite
-        } else {
-            messageDiv.classList.add('remote-message');  // Message à gauche
-        }
-  
-        messageDiv.innerHTML = `<strong>${data.username}:</strong> ${data.message}`;
-        chatBox.appendChild(messageDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    };
-  
-   */
-  
-   chatSocket.onopen = () => {
+        chatSocket.onopen = () => {
             console.log("The connection was setup successfully!");
-            //chatSocket.send(" envoyé après ouverture");
-          };
-// Gérer les événements WebSocket
-   chatSocket.onmessage = async function (e) {
-    const data = JSON.parse(e.data);
-    console.log("Message: ", data)
-    if(data.username !== currentUsername){
-       
-     if (data.message) {
+        };
 
+        chatSocket.onmessage = async function (e) {
+            const data = JSON.parse(e.data);
+            console.log("Message: ", data);
+            if (data.username !== currentUsername) {
+                if (data.message) {
+                    if (data.message.includes("hand")) {
+                        const handButton = document.getElementById("handButton");
+                        const handIcon = document.getElementById("handIcon");
+                        const handPopup = document.getElementById("handpopup");
+                        if (data.message.includes("up")) {
+                            handPopup.style.visibility = "visible";
+                            handPopup.innerHTML = `<i class="fas fa-hand-point-up"></i>${data.username}`;
+                        } else if (data.message.includes("down")) {
+                            handPopup.style.visibility = "hidden";
+                        }
+                    } else {
+                        const chatMessages = document.getElementById('text_chat');
+                        const chatlang = document.getElementById('chat_lang').value;
+                        console.log('Langue du chat: ', chatlang);
+                        if (chatlang !== "original") {
+                            await translateTextchat(data.message, data.username);
+                        } else {
+                            const newMessage = document.createElement('div');
+                            newMessage.classList.add('text-light', 'bg-dark', 'mt-2', 'p-2', 'mx-2');
+                            newMessage.textContent = `${data.username} : ${data.message}`;
+                            newMessage.style.border = '1px solid white';
+                            newMessage.style.borderRadius = '10px';
+                            newMessage.style.padding = '10px';
+                            newMessage.style.display = 'inline-block';
+                            newMessage.style.marginBottom = '10px';
+                            const wrapper = document.createElement('div');
+                            wrapper.style.display = 'block';
+                            wrapper.appendChild(newMessage);
+                            chatMessages.appendChild(wrapper);
+                        }
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                } else if (data.file_url) {
+                    const file_message = `
+                        <button class="btn btn-outline-dark me-2" type="button" style="border-radius: 4em; font-size: 1em;">
+                            ${data.username}
+                        </button> <a href="${data.file_url}" download="${data.file_name}" class="btn btn-primary" style="margin-top: 5px;">
+                            ${data.file_name} <i class="fas fa-download"></i>
+                        </a><br>`;
+                    document.getElementById("text_chat").insertAdjacentHTML("beforeend", file_message);
+                }
+            }
+        };
 
-    if(data.message.includes("hand")){
-            const handButton = document.getElementById("handButton");
-            const handIcon = document.getElementById("handIcon");
-            const handPopup = document.getElementById("handpopup");
-         if(data.message.includes("up")){
-            handPopup.style.visibility = "visible";
-            handPopup.innerHTML = `<i class="fas fa-hand-point-up"></i>${data.username}`
-         }else if(data.message.includes("down")){
-            handPopup.style.visibility = "hidden"
-         }
-           
-            
-           
-        }else{
-            //document.getElementById("notificationBadge").style.display ='block';
-            //sound.play();
-            const chatMessages = document.getElementById('text_chat');
-                const chatmess = "";
-                const chatlang = document.getElementById('chat_lang').value
-                console.log('Langue du chat: ', chatlang)
-                
-                if (chatlang !== "original"){
-                    await translateTextchat(data.message, data.username);
-                
+        async function translateTextchatsend(text, chatlang) {
+            try {
+                const subscriptionKey = '6wb4SY1xPaK6f9hTQeXH7j1fQuInvtmszas159jZ06Bv07V2hegVJQQJ99AKACYeBjFXJ3w3AAAAACOGnUa0';
+                const endpoint = 'https://api.cognitive.microsofttranslator.com/';
+                const region = 'eastus';
+                const path = '/translate?api-version=3.0';
+                const url = `${endpoint}${path}&to=${chatlang.split('-')[0]}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Ocp-Apim-Subscription-Key': subscriptionKey,
+                        'Ocp-Apim-Subscription-Region': region,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify([{ 'Text': text }])
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("translate: ", data[0].translations[0].text);
+                    return data[0].translations[0].text;
+                } else {
+                    console.error('Erreur de traduction:', response.statusText);
+                    return "";
+                }
+            } catch (error) {
+                console.error('Erreur réseau ou autre:', error);
+                return "";
+            }
+        }
 
-                }else {
-                    // Ajouter le message reçu au conteneur
-                    console.log("Message1: ", data)
+        async function translateTextchat(text, remote_user) {
+            try {
+                const subscriptionKey = '6wb4SY1xPaK6f9hTQeXH7j1fQuInvtmszas159jZ06Bv07V2hegVJQQJ99AKACYeBjFXJ3w3AAAAACOGnUa0';
+                const endpoint = 'https://api.cognitive.microsofttranslator.com/';
+                const region = 'eastus';
+                const path = '/translate?api-version=3.0';
+                const chatlang = document.getElementById('chat_lang').value;
+                const url = `${endpoint}${path}&to=${chatlang.split('-')[0]}`;
+                const chatMessages = document.getElementById('text_chat');
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Ocp-Apim-Subscription-Key': subscriptionKey,
+                        'Ocp-Apim-Subscription-Region': region,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify([{ 'Text': text }])
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("translate: ", data[0].translations[0].text);
                     const newMessage = document.createElement('div');
-                    newMessage.classList.add('text-light', 'bg-dark', 'mt-2', 'p-2', "mx-2");
-                    newMessage.textContent = `${data.username} : `+ data.message;
-
-                    newMessage.style.border = '1px solid white'; // Bordure blanche
-                    newMessage.style.borderRadius = '10px'; // Coins arrondis
-                    newMessage.style.padding = '10px'; // Espacement interne (au cas où)
+                    newMessage.classList.add('text-light', 'bg-dark', 'mt-2', 'p-2');
+                    newMessage.textContent = `${remote_user} : ${data[0].translations[0].text}`;
+                    newMessage.style.border = '1px solid white';
+                    newMessage.style.borderRadius = '10px';
+                    newMessage.style.padding = '10px';
                     newMessage.style.display = 'inline-block';
                     newMessage.style.marginBottom = '10px';
-                    // Forcer les messages sur des lignes distinctes
                     const wrapper = document.createElement('div');
-                    wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
-                    
-                    wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
+                    wrapper.style.display = 'block';
                     wrapper.appendChild(newMessage);
-
-                    chatMessages.appendChild(wrapper); // Ajouter le conteneur au chat
-
+                    chatMessages.appendChild(wrapper);
+                    return data[0].translations[0].text;
+                } else {
+                    console.error('Erreur de traduction:', response.statusText);
+                    return "";
                 }
-            
-        }
-                
-
-                
-                // Faire défiler vers le bas pour afficher le dernier message
-            
-                }else if (data.file_url) {
-                //document.getElementById("notificationBadge").style.display ='block';
-                //sound.play()
-                const file_message = `
-                    <button id="camera-btn" class="btn btn-outline-dark me-2" type="button"
-                                style="border-radius: 4em; font-size: 1em;">
-                                ${data.username}
-                            </button>  <a href="${data.file_url}" download="${data.file_name}" class="btn btn-primary" style="margin-top: 5px;">
-                    ${data.file_name} <i class="fas fa-download"></i>
-                    </a><br>`;
-                document.getElementById("text_chat").insertAdjacentHTML("beforeend", file_message);
-            };
-        
-
-         
-    
-    }
-     };
-
-
-// Fonction de traduction de texte
-
-async function translateTextchatsend(text, chatlang) {
-    
-    try {
-        const subscriptionKey = '6wb4SY1xPaK6f9hTQeXH7j1fQuInvtmszas159jZ06Bv07V2hegVJQQJ99AKACYeBjFXJ3w3AAAAACOGnUa0';
-        const endpoint = 'https://api.cognitive.microsofttranslator.com/';
-        const region = 'eastus';
-        const path = '/translate?api-version=3.0';
-        //const chatlang = document.getElementById('chat_lang').value
-        const url = `${endpoint}${path}&to=${chatlang.split('-')[0]}`;
-        const chatMessages = document.getElementById('text_chat');
-       
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Ocp-Apim-Subscription-Key': subscriptionKey,
-                'Ocp-Apim-Subscription-Region': region,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify([{ 'Text': text }])
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log("translate: ",  data[0].translations[0].text)
-            
-            return data[0].translations[0].text;
-        } else {
-            console.error('Erreur de traduction:', response.statusText);
-            return "";
-        }
-    } catch (error) {
-        console.error('Erreur réseau ou autre:', error);
-        return "";
-    }
-}
-
-async function translateTextchat(text, remote_user) {
-    try {
-        const subscriptionKey = '6wb4SY1xPaK6f9hTQeXH7j1fQuInvtmszas159jZ06Bv07V2hegVJQQJ99AKACYeBjFXJ3w3AAAAACOGnUa0';
-        const endpoint = 'https://api.cognitive.microsofttranslator.com/';
-        const region = 'eastus';
-        const path = '/translate?api-version=3.0';
-        const chatlang = document.getElementById('chat_lang').value
-        const url = `${endpoint}${path}&to=${chatlang.split('-')[0]}`;
-        const chatMessages = document.getElementById('text_chat');
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Ocp-Apim-Subscription-Key': subscriptionKey,
-                'Ocp-Apim-Subscription-Region': region,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify([{ 'Text': text }])
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log("translate: ",  data[0].translations[0].text)
-            const newMessage = document.createElement('div');
-            newMessage.classList.add('text-light', 'bg-dark', 'mt-2', 'p-2');
-            newMessage.textContent = `${remote_user} : `+ data[0].translations[0].text;
-
-            newMessage.style.border = '1px solid white'; // Bordure blanche
-            newMessage.style.borderRadius = '10px'; // Coins arrondis
-            newMessage.style.padding = '10px'; // Espacement interne (au cas où)
-            newMessage.style.display = 'inline-block';
-            newMessage.style.marginBottom = '10px';
-            // Forcer les messages sur des lignes distinctes
-            const wrapper = document.createElement('div');
-            wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
-            wrapper.appendChild(newMessage);
-
-            chatMessages.appendChild(wrapper);
-
-
-
-            return data[0].translations[0].text;
-        } else {
-            console.error('Erreur de traduction:', response.statusText);
-            return "";
-        }
-    } catch (error) {
-        console.error('Erreur réseau ou autre:', error);
-        return "";
-    }
-}
-chatSocket.onclose = function (e) {
-    console.error('Le socket WebSocket est fermé.');
-};
-   
-  
-  
-  </script>
-  
-  <script>
-
-
-    // Fonction pour envoyer un message
-  async function  sendMessage() {
-    console.log("Begin send Message")
-    const userInput = document.getElementById('user-input');
-    //const message = userInput.value.trim();
-    const message1 = document.getElementById('id_message_send_input');
-    let messageInput= message1.value;
-    console.log("Message: ", messageInput, currentUsername)
-    console.log("val: ", document.getElementById("selectedValue").textContent.trim(), messageInput)
-    if (document.getElementById("selectedValue").textContent.trim().length > 0 &&  document.getElementById("selectedValue").textContent.trim() !== 'Original' ){
-       
-            messageInput =  await translateTextchatsend(messageInput, document.getElementById("selectedValue").textContent.trim())
+            } catch (error) {
+                console.error('Erreur réseau ou autre:', error);
+                return "";
             }
-    if (messageInput || messageInput.trim() !== "") {
-        console.log("Message: ", messageInput, currentUsername);
-        // Envoyer le message via WebSocket
-        
-        // Ajouter le message utilisateur à l'affichage
-        const chatMessages = document.getElementById('text_chat');
-        const newMessage = document.createElement('div');
-        
-        newMessage.classList.add('text-light', 'bg-dark', 'mb-2', 'p-2', 'ml-2');
-        newMessage.textContent =  messageInput;
-  
-        newMessage.style.border = '1px solid white'; // Bordure blanche
-        newMessage.style.borderRadius = '10px'; // Coins arrondis
-        newMessage.style.padding = '10px'; // Espacement interne (au cas où)
-        newMessage.style.display = 'inline-block';
-        newMessage.style.marginBottom = '10px';
-        const divElements = chatMessages.querySelectorAll('div');
-        const numberOfDivs = divElements.length;
-        console.log("Number of div: ",numberOfDivs+1 );
-  
-        newMessage.id = `${numberOfDivs + 1}`;
-        // Forcer les messages sur des lignes distinctes
-  
-        const editSpan = document.createElement('span');
-        editSpan.textContent = ' ✎'; // Icône ou texte pour modifier
-        editSpan.style.cursor = 'pointer'; // Apparence de clic
-        editSpan.style.marginLeft = '10px'; // Espacement entre le texte et l'icône
-        editSpan.style.color = '#f39c12'; // Couleur du texte
-        editSpan.id = `${numberOfDivs + 1}`;
-  
-        const wrapper = document.createElement('div');
-        wrapper.style.display = 'block'; // Assure que chaque message est sur une nouvelle ligne
-        newMessage.appendChild(editSpan);
-        wrapper.classList.add('text-end', 'mx-3', 'my-3')
-        wrapper.appendChild(newMessage);
-  
-        chatMessages.appendChild(wrapper); // Ajouter le conteneur au chat
-  
-        // Réinitialiser le champ d'entrée
-        message1.value = '';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        console.log("Send")
-        chatSocket.send(JSON.stringify({
-            //messageInput
-            //await translateTextchat 
-        
-            message: messageInput, 
-            username: currentUsername,
-            //numberOfDivs: numberOfDivs
-         }));
-  
-    }
-  }
-  
-  // Envoyer un message
-  document.getElementById('id_message_send_button').addEventListener('click', () => {
-    console.log("Message")
-    
-    sendMessage();
-  });
-  
-  document.getElementById('id_message_send_input').addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            // Empêcher le comportement par défaut (soumettre un formulaire)
-            event.preventDefault();
-            // Appeler la fonction d'envoi du message
+        }
+
+        chatSocket.onclose = function (e) {
+            console.error('Le socket WebSocket est fermé.');
+        };
+
+        async function sendMessage() {
+            console.log("Begin send Message");
+            const message1 = document.getElementById('id_message_send_input');
+            let messageInput = message1.value;
+            console.log("Message: ", messageInput, currentUsername);
+            console.log("val: ", document.getElementById("selectedValue").textContent.trim(), messageInput);
+            if (document.getElementById("selectedValue").textContent.trim().length > 0 && document.getElementById("selectedValue").textContent.trim() !== 'Original') {
+                messageInput = await translateTextchatsend(messageInput, document.getElementById("selectedValue").textContent.trim());
+            }
+            if (messageInput && messageInput.trim() !== "") {
+                console.log("Message: ", messageInput, currentUsername);
+                const chatMessages = document.getElementById('text_chat');
+                const newMessage = document.createElement('div');
+                newMessage.classList.add('text-light', 'bg-dark', 'mb-2', 'p-2', 'ml-2');
+                newMessage.textContent = messageInput;
+                newMessage.style.border = '1px solid white';
+                newMessage.style.borderRadius = '10px';
+                newMessage.style.padding = '10px';
+                newMessage.style.display = 'inline-block';
+                newMessage.style.marginBottom = '10px';
+                const divElements = chatMessages.querySelectorAll('div');
+                const numberOfDivs = divElements.length;
+                console.log("Number of div: ", numberOfDivs + 1);
+                newMessage.id = `${numberOfDivs + 1}`;
+                const editSpan = document.createElement('span');
+                editSpan.textContent = ' ✎';
+                editSpan.style.cursor = 'pointer';
+                editSpan.style.marginLeft = '10px';
+                editSpan.style.color = '#f39c12';
+                editSpan.id = `${numberOfDivs + 1}`;
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'block';
+                wrapper.classList.add('text-end', 'mx-3', 'my-3');
+                newMessage.appendChild(editSpan);
+                wrapper.appendChild(newMessage);
+                chatMessages.appendChild(wrapper);
+                message1.value = '';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                console.log("Send");
+                chatSocket.send(JSON.stringify({
+                    message: messageInput,
+                    username: currentUsername,
+                }));
+            }
+        }
+
+        document.getElementById('id_message_send_button').addEventListener('click', () => {
+            console.log("Message");
             sendMessage();
-        }
-    });
-  
-    
-document.getElementById("chantsendlang").addEventListener("click", function(event) {
-    if (event.target.classList.contains("dropdown-item")) {
-        let selectedText = event.target.textContent.trim();
-        if (selectedText !='Original'){
-            document.getElementById("selectedValue").innerHTML = `<i class="fas fa-language"></i>  ${selectedText}`;
-        }else{
-            document.getElementById("selectedValue").innerHTML = `<i class="fas fa-language"></i>`;
-        }
-        console.log('selected Value: ', selectedText)
-       
-       
-    }
-});
+        });
 
+        document.getElementById('id_message_send_input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
 
-  </script>
- 
- <script>
-    function fetchUsers() {
-     // Remplace par la valeur dynamique si nécessaire
-  
-    fetch(`/get_active_users/${discuss_id}/`)  // Appelle la vue Django
-   
-        .then(response => response.json())
-        .then(data => {
-            const userListElement = document.getElementById("user-list");
-            userListElement.innerHTML = ""; // Nettoyer la liste
-  
-            data.users.forEach(username => {
-                const li = document.createElement("li");
-                //li.textContent =  username;
-                li.innerHTML = `
-                   <div class="card-text p-1 mb-2" style="border: solid 1px white; border-radius: 2em;" > 
-    <button class="btn btn-outline-light me-1" type="button" style="border-radius: 4em; font-size: 0.5em;">
-                                  
+        document.getElementById("chantsendlang").addEventListener("click", function(event) {
+            if (event.target.classList.contains("dropdown-item")) {
+                let selectedText = event.target.textContent.trim();
+                if (selectedText !== 'Original') {
+                    document.getElementById("selectedValue").innerHTML = `<i class="fas fa-language"></i> ${selectedText}`;
+                } else {
+                    document.getElementById("selectedValue").innerHTML = `<i class="fas fa-language"></i>`;
+                }
+                console.log('selected Value: ', selectedText);
+            }
+        });
+
+        // Gestion du sélecteur d'emojis
+        const emojiButton = document.getElementById('emojiButton');
+        const emojiPickerContainer = document.getElementById('emojiPickerContainer');
+        const messageInput = document.getElementById('id_message_send_input');
+        const emojiPicker = document.querySelector('emoji-picker');
+
+        emojiButton.addEventListener('click', () => {
+            emojiPickerContainer.style.display = emojiPickerContainer.style.display === 'none' ? 'block' : 'none';
+        });
+
+        emojiPicker.addEventListener('emoji-click', (event) => {
+            const emoji = event.detail.unicode;
+            messageInput.value += emoji;
+            messageInput.focus();
+            emojiPickerContainer.style.display = 'none';
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!emojiPickerContainer.contains(event.target) && event.target !== emojiButton) {
+                emojiPickerContainer.style.display = 'none';
+            }
+        });
+
+        function fetchUsers() {
+            fetch(`/get_active_users/${discuss_id}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const userListElement = document.getElementById("user-list");
+                    userListElement.innerHTML = "";
+                    data.users.forEach(username => {
+                        const li = document.createElement("li");
+                        li.innerHTML = `
+                            <div class="card-text p-1 mb-2" style="border: solid 1px white; border-radius: 2em;">
+                                <button class="btn btn-outline-light me-1" type="button" style="border-radius: 4em; font-size: 0.5em;">
                                     <i id="user" class="fas fa-user"></i>
                                 </button> ${username}
-                            </div>
-                `;
-                userListElement.appendChild(li);
-            });
-        })
-        .catch(error => console.error("Erreur lors de la récupération des utilisateurs :", error));
-  }
-  
-  // Mettre à jour toutes les secondes
-  setInterval(fetchUsers, 1000);
-  
-  </script>
-<script>
-    // Sélectionner les éléments
-const importButton = document.getElementById("importButton");
-const fileInput = document.getElementById("fileInput");
-const chatMessages = document.getElementById("text_chat");
+                            </div>`;
+                        userListElement.appendChild(li);
+                    });
+                })
+                .catch(error => console.error("Erreur lors de la récupération des utilisateurs :", error));
+        }
 
-let selectedFile = null; // Variable pour stocker le fichier sélectionné
+        setInterval(fetchUsers, 1000);
 
-// Lorsque l'utilisateur clique sur l'icône d'import, ouvrir le sélecteur de fichiers
-importButton.addEventListener("click", function () {
-  fileInput.click();
-});
+        const importButton = document.getElementById("importButton");
+        const fileInput = document.getElementById("fileInput");
+        const chatMessages = document.getElementById("text_chat");
+        let selectedFile = null;
 
-// Lorsque l'utilisateur sélectionne un fichier
-fileInput.addEventListener("change", function (event) {
-  const file = event.target.files[0];
-  if (file) {
-    selectedFile = file; // Stocke le fichier sélectionné
-    const fileId = `file-${Date.now()}`; // Génère un ID unique
+        importButton.addEventListener("click", function () {
+            fileInput.click();
+        });
 
-    // Afficher les détails du fichier dans la card
-    const fileMessage = `
-      <div id="${fileId}" class="text-end mx-2 my-2">
-        <div class="file-message">
-          <a href="#" class="btn btn-primary" style="margin-top: 5px;">
-            ${file.name} <i class="fas fa-download"></i>
-          </a><br>
-        </div>
-        <div class="file-action-buttons">
-          <button class="acceptFile btn btn-outline-dark me-1" style="border-radius: 4em; font-size: 0.8em;">
-            <i class="fas fa-check"></i>
-          </button>
-          <button class="cancelFile btn btn-outline-dark me-2" style="border-radius: 4em; font-size: 0.8em;">
-            X
-          </button>
-        </div>
-      </div>
-    `;
+        fileInput.addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                const fileId = `file-${Date.now()}`;
+                const fileMessage = `
+                    <div id="${fileId}" class="text-end mx-2 my-2">
+                        <div class="file-message">
+                            <a href="#" class="btn btn-primary" style="margin-top: 5px;">
+                                ${file.name} <i class="fas fa-download"></i>
+                            </a><br>
+                        </div>
+                        <div class="file-action-buttons">
+                            <button class="acceptFile btn btn-outline-dark me-1" style="border-radius: 4em; font-size: 0.8em;">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="cancelFile btn btn-outline-dark me-2" style="border-radius: 4em; font-size: 0.8em;">
+                                X
+                            </button>
+                        </div>
+                    </div>`;
+                chatMessages.insertAdjacentHTML("beforeend", fileMessage);
+                const fileElement = document.getElementById(fileId);
+                const acceptFileButton = fileElement.querySelector(".acceptFile");
+                const cancelFileButton = fileElement.querySelector(".cancelFile");
+                acceptFileButton.addEventListener("click", function () {
+                    acceptFile(fileElement, file);
+                });
+                cancelFileButton.addEventListener("click", function () {
+                    cancelFile(fileElement);
+                });
+            }
+        });
 
-    chatMessages.insertAdjacentHTML("beforeend", fileMessage);
+        function acceptFile(fileElement, file) {
+            if (file) {
+                console.log("Fichier accepté :", file.name);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const fileData = e.target.result.split(",")[1];
+                    chatSocket.send(JSON.stringify({
+                        file: fileData,
+                        file_name: file.name,
+                        file_type: file.type,
+                        username: currentUsername,
+                    }));
+                };
+                reader.readAsDataURL(file);
+                fileInput.value = "";
+                selectedFile = null;
+                fileElement.querySelector(".file-action-buttons").style.display = "none";
+            }
+        }
 
-    // Sélectionner les boutons dans le message ajouté
-    const fileElement = document.getElementById(fileId);
-    const acceptFileButton = fileElement.querySelector(".acceptFile");
-    const cancelFileButton = fileElement.querySelector(".cancelFile");
+        function cancelFile(fileElement) {
+            selectedFile = null;
+            fileElement.remove();
+        }
+    </script>
 
-    // Ajouter les événements
-    acceptFileButton.addEventListener("click", function () {
-      acceptFile(fileElement, file);
-    });
-
-    cancelFileButton.addEventListener("click", function () {
-      cancelFile(fileElement);
-    });
-  }
-});
-
-// Lorsque l'utilisateur clique sur "Accepter", envoyer le fichier
-function acceptFile(fileElement, file) {
-  if (file) {
-    console.log("Fichier accepté :", file.name);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const fileData = e.target.result.split(",")[1]; // Get base64 string
-      chatSocket.send(
-        JSON.stringify({
-          file: fileData,
-          file_name: file.name,
-          file_type: file.type,
-          username: currentUsername, // Remplacez par votre logique pour le nom d'utilisateur
-        })
-      );
-    };
-    reader.readAsDataURL(file);
-
-    // Réinitialiser l'input file et masquer les options
-    fileInput.value = "";
-    selectedFile = null;
-    fileElement.querySelector(".file-action-buttons").style.display = "none";
-  }
-}
-
-// Lorsque l'utilisateur clique sur "Annuler", retirer l'affichage
-function cancelFile(fileElement) {
-  selectedFile = null;
-  fileElement.remove();
-}
-
-
-
-
-
-
-
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
-    <!-- Option 2: Separate Popper and Bootstrap JS -->
-    <!--
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
-    -->
-
-
-
-  
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </body>
 </html>
-
-

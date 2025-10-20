@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 
 # Create your views here.
 
@@ -170,7 +170,7 @@ def forgotpassword(request):
                uid = urlsafe_base64_encode(force_bytes(user.id))
                current_host = request.META["HTTP_HOST"]
                
-               Subject = "Password Reset ItrustCall "
+               Subject = "Password Reset Yomla "
                
                code_message= f"""
                     <!DOCTYPE html>
@@ -262,7 +262,7 @@ def forgotpassword(request):
                             </p>
                             <div class="footer">
                                 <p>Thanks,
-                                  ItrustCall Authentication.</p>
+                                  Yomla Authentication.</p>
                             </div>
                         </div>
                         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -277,7 +277,7 @@ def forgotpassword(request):
                
                '''email = EmailMessage(Subject,
                              message,
-                             f"ItrustCall <{settings.EMAIL_HOST}>",
+                             f"Yomla <{settings.EMAIL_HOST}>",
                              [user.email])
 
                email.send()'''
@@ -448,7 +448,7 @@ def register(request):
                     emailsender(subject, email_message, user.email)
                     '''email = EmailMessage(subject,
                              email_message,
-                             f"ItrustCall <{settings.EMAIL_HOST}>",
+                             f"Yomla <{settings.EMAIL_HOST}>",
                              [user.email])
 
                     email.send()'''
@@ -626,6 +626,7 @@ import ssl, certifi
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 
+
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
@@ -639,7 +640,7 @@ def email_sender(subject, destination, template_path, context, header=None ):
     msg = EmailMultiAlternatives(
         subject=subject,
         body="",
-        from_email=f"ItrustCall <{settings.EMAIL_HOST_USER}>",
+        from_email=f"Yomla <{settings.EMAIL_HOST_USER}>",
         to=[destination],
         headers=header
     )
@@ -647,6 +648,8 @@ def email_sender(subject, destination, template_path, context, header=None ):
     msg.attach_alternative(template, "text/html")
     msg.send()
     print(f"\n message envoyé avec succès à {destination}")
+
+
 
  
 @login_required
@@ -688,13 +691,16 @@ def create_meeting(request):
 
         # Envoi des invitations par email
         subject = f"Invitation pour réunion : {meeting.name}"
+         
+        meeting_id=meeting.id,
         for dest in emails:
             context = {
-                "request": request,
-                "meeting": meeting,
+                "username": request.user.username,
+               
                 "date": date,
                 "time": time,
-                "current_host": current_host,
+               "meeting_name": meeting.name,
+                "login_url" :  f"http://{current_host}/home/{meeting_id}/"
             }
             email_sender(
                 subject=subject,
@@ -777,7 +783,29 @@ def home(request, meeting_id=None):
     return render(request, "home.html")
 
 
+@login_required
+def delete_discussion(request, discussion_id):
+    discussion = get_object_or_404(Discussion, id=discussion_id)
+    
+    if request.user != discussion.created_by:
+        return JsonResponse({
+            'success': False,
+            'message': "Vous n'êtes pas autorisé à supprimer cette discussion."
+        }, status=403)
 
+    if request.method == "POST":
+        discussion_name = discussion.name
+        discussion.delete()
+        return JsonResponse({
+            'success': True,
+            'message': f"Discussion '{discussion_name}' supprimée avec succès !",
+            'discussion_name': discussion_name
+        })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Méthode non autorisée.'
+    }, status=405)
 def co_admin(request, id_user, meeting_id):
     if request.method == 'POST' and id_user:
         try:
@@ -879,7 +907,7 @@ def create_discussion(request):
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Invitation la une Discussion {name} sur ItrustCall</title>
+                <title>Invitation la une Discussion {name} sur Yomla</title>
                 <style>
                     body {{
                         font-family: Arial, sans-serif;
@@ -933,10 +961,10 @@ def create_discussion(request):
             </head>
             <body>
                 <div class="email-container">
-                    <h1>Invitation à une Réunion ItrustCall</h1>
+                    <h1>Invitation à une Réunion Yomla</h1>
                     <div class="content">
                         <p>Bonjour,</p>
-                        <p><strong>{request.user}</strong> vous invite à rejoindre la discussion <strong>{discussion.name}</strong> sur <strong>ItrustCall</strong>.</p>
+                        <p><strong>{request.user}</strong> vous invite à rejoindre la discussion <strong>{discussion.name}</strong> sur <strong>Yomla</strong>.</p>
                         <p>Pour rejoindre la réunion, veuillez cliquer sur le bouton ci-dessous :</p>
                         <a href="https://www.videocall.com/reunion/123456" class="button">Rejoindre la Discussion</a>
                         <p>Si le lien ne fonctionne pas, copiez et collez l'adresse suivante dans votre navigateur :</p>
@@ -944,7 +972,7 @@ def create_discussion(request):
                         <p>{current_host}/discussion/{discussion.id}/</p>
                     </div>
                     <div class="footer">
-                        <p>Nous avons hâte de vous retrouver sur ItrustCall.</p>
+                        <p>Nous avons hâte de vous retrouver sur Yomla.</p>
                         <p>Si vous avez des questions, n'hésitez pas à <a href="mailto:support@videocall.com">nous contacter</a>.</p>
                     </div>
                 </div>
@@ -1251,7 +1279,7 @@ def emailsender(Subject, html, user_email):
     # on ajoute un sujet
     message["Subject"] = Subject
     # un émetteur
-    message["From"] = f"ItrustCall <{email_address}>"
+    message["From"] = f"Yomla <{email_address}>"
     # un destinataire
     message["To"] = user_email
     # on crée deux éléments MIMEText 
@@ -1283,7 +1311,7 @@ def group_emailsender(Subject, html, user_emails):
     # on ajoute un sujet
     message["Subject"] = Subject
     # un émetteur
-    message["From"] = f"ItrustCall <{email_address}>"
+    message["From"] = f"Yomla <{email_address}>"
     
     # Destinataires multiples
     message["To"] = ", ".join(user_emails)  # On joint les emails par une virgule
@@ -1313,7 +1341,7 @@ def emailsender_contact(Subject, html, email_address,  user_email, contact = Non
     # on ajoute un sujet
     message["Subject"] = Subject
     # un émetteur
-    message["From"] = f"ItrustCall <{email_address}>"
+    message["From"] = f"Yomla <{email_address}>"
     # un destinataire
     
     if contact:
@@ -1337,20 +1365,34 @@ def emailsender_contact(Subject, html, email_address,  user_email, contact = Non
 
 
 
+from langchain_huggingface import HuggingFaceEmbeddings
 
+# openai.api_key ="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"
+# os.environ["OPENAI_API_KEY"] ="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"
 
-openai.api_key ="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"
-os.environ["OPENAI_API_KEY"] ="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"
+# Initialisation des embeddings
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-l6-v2",
+    model_kwargs={'device': 'cpu'},
+    encode_kwargs={'normalize_embeddings': True}
+)
 
-embeddings = OpenAIEmbeddings()
-
+from django.conf import settings
 def boat(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         question = data.get('message', '')
         print('La question: ', question)
 
-        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+        llm = AzureChatOpenAI(
+                #openai_api_base="https://realtimekokou.openai.azure.com/openai/deployments/gpt-35-turbo/chat/completions?api-version=2024-08-01-preview",
+                openai_api_version="2024-12-01-preview",
+                deployment_name="gpt-5-chat",
+                openai_api_key=settings.AZURE_CHAT_OPENAI_API_KEY,
+                openai_api_type='azure',
+                azure_endpoint= "https://ablam-mfyf5f8z-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-5-chat/chat/completions?api-version=2025-01-01-preview",
+            )
+
         folder_path = os.path.join(settings.MEDIA_ROOT, "videocall_boat")
         vectordb =FAISS.load_local(folder_path, embeddings , allow_dangerous_deserialization=True )
         memory = ConversationBufferMemory(
@@ -1511,7 +1553,7 @@ from django.utils.timezone import now
 
 plans_paypal = [
     {"name": "Gratuit", "price": 0, "features": [
-        {"name": "Crédit d'appel", "value": "5h/mois"},
+        {"name": "Crédit d'appel", "value": "5h (Valable 1 mois)"},
         {"name": "Traduction IA", "value": "Oui"},
         {"name": "Renouvellement", "value": "Mensuel"},
     ]},
@@ -1575,7 +1617,7 @@ def paiement_paypal(request, plan, montant):
     paypal_dict = {
         "business": settings.PAYPAL_RECEIVER_EMAIL,
         "amount": montant,
-        "item_name": f"ItrustCall Crédit {montant}€",
+        "item_name": f"Yomla Crédit {montant}€",
         "invoice": f"Payment{request.user.id}{montant}{int(now().timestamp())}",
         "currency_code": "EUR",
         "notify_url": request.build_absolute_uri("/paypal-ipn/"),
@@ -1587,7 +1629,7 @@ def paiement_paypal(request, plan, montant):
     # Pour les plans d'abonnement, nous ajoutons des options spécifiques
     if plan in ['hebdomadaire', 'illimitee']:
         paypal_dict["cmd"] = "_xclick-subscriptions"
-        paypal_dict["item_name"] = f"ItrustCall Crédit {plan.capitalize()} Plan"
+        paypal_dict["item_name"] = f"Yomla Crédit {plan.capitalize()} Plan"
         paypal_dict["invoice"] = f"INV-{plan}-{request.user.id}-{now().timestamp()}"
         paypal_dict["a3"] = montant  # Le montant par période
         paypal_dict["p3"] = 1  # Période de facturation (1 signifie hebdomadaire ou mensuel selon t3)

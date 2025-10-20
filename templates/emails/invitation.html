@@ -9,18 +9,18 @@
 <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin:0; padding:0;">
     <div
         style="background-color: #ffffff; max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-        <h1 style="color:#007bff; text-align:center;">Invitation à une Réunion ItrustCall</h1>
+        <h1 style="color:#007bff; text-align:center;">Invitation à une Réunion Yomla</h1>
         <div style="font-size:16px; color:#333; margin-bottom:20px;">
             <p>Bonjour,</p>
-            <p>{request.user.username} vous invite à rejoindre la réunion <strong>{meeting.name}</strong> sur
-                <strong>ItrustCall</strong>.</p>
-            <p>Pour rejoindre la réunion, cliquez sur le bouton ci-dessous à {date} {time} :</p>
-            <a href="http://{current_host}/home/{meeting.id}/"
+            <p>{{username}} vous invite à rejoindre la réunion <strong>{{meeting_name}}</strong> sur
+                <strong>Yomla</strong>.</p>
+            <p>Pour rejoindre la réunion, cliquez sur le bouton ci-dessous à {{date}} {{time}} :</p>
+            <a href="{{login_url}}"
                 style="display:inline-block; background-color:#007bff; color:white; padding:10px 20px; border-radius:5px; text-decoration:none;">Rejoindre
                 la Réunion</a>
         </div>
         <div style="font-size:14px; color:#777; text-align:center; margin-top:30px;">
-            <p>Nous avons hâte de vous retrouver sur ItrustCall.</p>
+            <p>Nous avons hâte de vous retrouver sur Yomla.</p>
         </div>
     </div>
 </body>

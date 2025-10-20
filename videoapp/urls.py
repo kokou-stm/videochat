@@ -61,5 +61,6 @@ urlpatterns = [
     path("paiement-reussi/<str:plan>/", paiement_reussi, name="paiement_reussi"),
     path("paiement-annule/", paiement_annule, name="paiement_annule"),
     path("subscription_view/", subscription_view, name="subscription_view"),
+path('discussion/<int:discussion_id>/delete/',  delete_discussion, name='delete_discussion'),
     
     ]
