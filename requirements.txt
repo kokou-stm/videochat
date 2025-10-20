@@ -16,8 +16,6 @@ openai
 pillow 
 psycopg 
 psycopg-binary 
-sentence-transformers
-
 pypdf 
 PyPDF2 
 python-dotenv 
