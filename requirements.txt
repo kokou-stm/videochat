@@ -3,7 +3,7 @@ daphne==4.1.2
 Django
 django-paypal==2.1
 djangorestframework==3.15.2
-faiss-cpu==1.12.0
+faiss-cpu
 gTTS==2.5.4
 gunicorn==23.0.0
 huggingface-hub==0.35.3
