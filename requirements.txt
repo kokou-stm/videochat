@@ -13,7 +13,6 @@ langchain-core
 langchain-huggingface
 langchain-openai
 langchain-text-splitters
-
 numpy
 openai 
 pillow 
@@ -22,7 +21,6 @@ PyPDF2
 python-dotenv 
 sentence-transformers 
 tiktoken 
-tokenizers 
 torch 
 tqdm 
 transformers 
