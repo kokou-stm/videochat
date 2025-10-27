@@ -11,9 +11,9 @@ langchain
 langchain-community
 langchain-core
 langchain-huggingface
-langchain-openai==0.2.3
-langchain-text-splitters==0.3.2
-langsmith==0.1.147
+langchain-openai
+langchain-text-splitters
+
 numpy==1.26.4
 openai==1.109.1
 pillow==12.0.0
