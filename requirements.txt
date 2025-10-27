@@ -14,15 +14,15 @@ langchain-huggingface
 langchain-openai
 langchain-text-splitters
 
-numpy==1.26.4
-openai==1.109.1
-pillow==12.0.0
-pypdf==6.1.2
-PyPDF2==3.0.1
-python-dotenv==1.1.1
-sentence-transformers==5.1.1
-tiktoken==0.12.0
-tokenizers==0.22.1
-torch==2.9.0
-tqdm==4.67.1
-transformers==4.57.1
+numpy
+openai 
+pillow 
+pypdf 
+PyPDF2 
+python-dotenv 
+sentence-transformers 
+tiktoken 
+tokenizers 
+torch 
+tqdm 
+transformers 
