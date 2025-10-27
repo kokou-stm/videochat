@@ -1,6 +1,6 @@
 channels==4.2.0
 daphne==4.1.2
-Django==5.2.7
+Django
 django-paypal==2.1
 djangorestframework==3.15.2
 faiss-cpu==1.12.0
