@@ -1,167 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
-	<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css'>
-	<style>
-		@import url("https://fonts.googleapis.com/css2?family=Redressed&family=Merriweather:wght@300;400;700&display=swap");
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement - Yomla</title>
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Redressed&family=Merriweather:wght@300;400;700&display=swap");
 
-		.redressed {
-			font-family: "Redressed", serif;
-		}
+        .redressed {
+            font-family: "Redressed", serif;
+        }
 
-		.merriweather {
-			font-family: "Merriweather", serif;
-		}
-	</style>
+        .merriweather {
+            font-family: "Merriweather", serif;
+        }
 
-	<style>
-		body {
-			margin-top: 20px;
-			background: #DCDCDC;
-		}
+        body {
+            margin-top: 20px;
+            background: #DCDCDC;
+        }
 
-		.pricing-content {
-			position: relative;
-		}
+        .pricing-content {
+            position: relative;
+        }
 
-		.pricing_design {
-			position: relative;
-			margin: 0px 15px;
-		}
+        .pricing_design {
+            position: relative;
+            margin: 0px 15px;
+        }
 
-		.pricing_design .single-pricing {
-			background: #554c86;
-			padding: 60px 40px;
-			border-radius: 30px;
-			box-shadow: 0 10px 40px -10px rgba(0, 64, 128, .2);
-			position: relative;
-			z-index: 1;
-		}
+        .pricing_design .single-pricing {
+            background: #554c86;
+            padding: 60px 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px -10px rgba(0, 64, 128, .2);
+            position: relative;
+            z-index: 1;
+            color: #fff;
+        }
 
-		.pricing_design .single-pricing:before {
-			content: "";
-			background-color: #fff;
-			width: 100%;
-			height: 100%;
-			border-radius: 18px 18px 190px 18px;
-			border: 1px solid #eee;
-			position: absolute;
-			bottom: 0;
-			right: 0;
-			z-index: -1;
-		}
+        .pricing_design .single-pricing:before {
+            content: "";
+            background-color: #fff;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px 18px 190px 18px;
+            border: 1px solid #eee;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            z-index: -1;
+        }
 
-		.price-head {}
+        .price-head h2 {
+            margin-bottom: 20px;
+            font-size: 26px;
+            font-weight: 600;
+        }
 
-		.price-head h2 {
-			margin-bottom: 20px;
-			font-size: 26px;
-			font-weight: 600;
-		}
+        .price-head h1 {
+            font-weight: 600;
+            margin-top: 30px;
+            margin-bottom: 5px;
+        }
 
-		.price-head h1 {
-			font-weight: 600;
-			margin-top: 30px;
-			margin-bottom: 5px;
-		}
+        .single-pricing ul {
+            list-style: none;
+            margin-top: 30px;
+            padding-left: 0;
+        }
 
-		.price-head span {}
+        .single-pricing ul li {
+            line-height: 36px;
+        }
 
-		.single-pricing ul {
-			list-style: none;
-			margin-top: 30px;
-		}
+        .single-pricing ul li i {
+            background: #fff;
+            color: #554c86;
+            width: 20px;
+            height: 20px;
+            border-radius: 30px;
+            font-size: 11px;
+            text-align: center;
+            line-height: 20px;
+            margin-right: 6px;
+        }
 
-		.single-pricing ul li {
-			line-height: 36px;
-		}
+        .price_btn {
+            background: #fff;
+            color: #554c86;
+            padding: 10px 30px;
+            display: inline-block;
+            margin-top: 20px;
+            border-radius: 2px;
+            transition: 0.3s;
+            font-weight: 600;
+        }
 
-		.single-pricing ul li i {
-			background: #554c86;
-			color: #fff;
-			width: 20px;
-			height: 20px;
-			border-radius: 30px;
-			font-size: 11px;
-			text-align: center;
-			line-height: 20px;
-			margin-right: 6px;
-		}
+        .price_btn:hover {
+            background: #0aa1d6;
+            color: #fff;
+        }
 
-		.pricing-price {}
+        a {
+            text-decoration: none;
+        }
 
-		.price_btn {
-			background: #554c86;
-			padding: 10px 30px;
-			color: #fff;
-			display: inline-block;
-			margin-top: 20px;
-			border-radius: 2px;
-			-webkit-transition: 0.3s;
-			transition: 0.3s;
-		}
+        .section-title {
+            margin-bottom: 60px;
+        }
 
-		.price_btn:hover {
-			background: #0aa1d6;
-		}
+        .text-center {
+            text-align: center !important;
+        }
 
-		a {
-			text-decoration: none;
-		}
+        .section-title h2 {
+            font-size: 45px;
+            font-weight: 600;
+            margin-top: 0;
+            position: relative;
+            text-transform: capitalize;
+            color: #333;
+        }
 
-		.section-title {
-			margin-bottom: 60px;
-		}
-
-		.text-center {
-			text-align: center !important;
-		}
-
-		.section-title h2 {
-			font-size: 45px;
-			font-weight: 600;
-			margin-top: 0;
-			position: relative;
-			text-transform: capitalize;
-		}
-	</style>
-
+        .loading-section {
+            margin-top: 50px;
+        }
+    </style>
 </head>
-
 <body>
-	
-<section style="visibility: hidden;">
-	<form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post" id="paypal_form">
-		{{ form.render }}
-		<button type="submit">Payer avec PayPal</button>
-	</form>
-</section>
-<section>
-	<div class="container text-center">
-		<div class="spinner-grow text-primary" role="status">
-			<span class="sr-only"></span>
-		  </div>
-		  <div class="spinner-grow text-primary" role="status">
-			<span class="sr-only"></span>
-		  </div>
-		  <div class="spinner-grow text-primary" role="status">
-			<span class="sr-only"></span>
-		  </div>
-	</div>
-</section>
-	<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js'></script>
-
-	<script>
-		
-    window.onload = function() {
-        // Soumettre le formulaire automatiquement
-        document.querySelector('form').submit();
-    }
-	</script>
+    <section class="container text-center">
+        <div class="section-title">
+            <h2>Inscription au plan {{ plan|capfirst }}</h2>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-6 pricing_design">
+                <div class="single-pricing">
+                    <div class="price-head">
+                        <h2>{{ plan|capfirst }}</h2>
+                        <h1>{{ montant }}€</h1>
+                        <span>
+                            {% if plan == "basique" %}
+                                Paiement unique après 14 jours d'essai gratuit
+                            {% else %}
+                                Par période après 14 jours d'essai gratuit
+                            {% endif %}
+                        </span>
+                    </div>
+                    <ul>
+                        <li><i class="fas fa-check"></i>Essai gratuit : 14 jours</li>
+                        {% if plan == "basique" %}
+                            <li><i class="fas fa-check"></i>Crédit d'appel : 10h (achat unique)</li>
+                        {% elif plan == "hebdomadaire" %}
+                            <li><i class="fas fa-check"></i>Crédit d'appel : 10h (abonnement)</li>
+                            <li><i class="fas fa-check"></i>Renouvellement : Hebdomadaire</li>
+                        {% elif plan == "illimitee" %}
+                            <li><i class="fas fa-check"></i>Crédit d'appel : Illimité</li>
+                            <li><i class="fas fa-check"></i>Renouvellement : Mensuel</li>
+                        {% endif %}
+                        <li><i class="fas fa-check"></i>Traduction IA : Oui</li>
+                    </ul>
+                    <form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post" id="paypal_form" style="visibility: hidden;">
+                        {{ form.render }}
+                        <button type="submit" class="price_btn">Continuer avec PayPal</button>
+                    </form>
+                    <a href="{% url 'paiement_annule' %}" class="price_btn mt-3">Annuler</a>
+                </div>
+            </div>
+        </div>
+        <div class="loading-section">
+            <div class="spinner-grow text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <div class="spinner-grow text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <div class="spinner-grow text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-3">Redirection vers PayPal...</p>
+        </div>
+    </section>
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js'></script>
+    <script>
+        window.onload = function() {
+            // Soumettre le formulaire automatiquement
+            document.getElementById('paypal_form').submit();
+        }
+    </script>
 </body>
-
 </html>

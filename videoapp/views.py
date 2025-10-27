@@ -631,99 +631,123 @@ ssl_context = ssl.create_default_context(cafile=certifi.where())
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
-def email_sender(subject, destination, template_path, context, header=None ):
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
+def email_sender(subject, destination, template_path, context, header=None):
     print("Envoi d'Email")
-    template = render_to_string(
-        template_path,
-        context
-    )
-
-    msg = EmailMultiAlternatives(
-        subject=subject,
-        body="",
-        from_email=f"Yomla <{settings.EMAIL_HOST_USER}>",
-        to=[destination],
-        headers=header
-    )
-
-    msg.attach_alternative(template, "text/html")
-    msg.send()
-    print(f"\n message envoyé avec succès à {destination}")
-
-
+    try:
+        # Render HTML template
+        html_content = render_to_string(template_path, context)
+        # Create a plain-text fallback
+        plain_text = (
+            f"Invitation to {context.get('meeting_name', 'Meeting')} by {context.get('username', 'Host')}.\n"
+            f"Date: {context.get('date', 'N/A')}\n"
+            f"Time: {context.get('time', 'N/A')}\n"
+            f"Join: {context.get('login_url', 'N/A')}"
+        )
+        
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=plain_text,  # Plain-text body for compatibility
+            from_email=f"Yomla <{settings.EMAIL_HOST_USER}>",
+            to=[destination],
+            headers=header
+        )
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+        print(f"\nMessage envoyé avec succès à {destination}")
+    except Exception as e:
+        logger.error(f"Error sending email to {destination}: {str(e)}")
+        raise
 
  
+
+from datetime import datetime
+
+
 @login_required
 def create_meeting(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         password = request.POST.get('password')
         emails = request.POST.get('email', '')
-
-        # Nettoyage et séparation des emails (virgules ou espaces)
-        emails = [i.strip() for i in emails.replace(" ", ",").split(",") if i.strip()]
-
         date = request.POST.get('date')
         time = request.POST.get('time')
 
-        # Si une date est fournie, on ajoute aussi l’email de l’hôte
+        # Clean and split emails
+        emails = [i.strip() for i in emails.replace(" ", ",").split(",") if i.strip()]
+
+        # Add host's email if date is provided
         if date and request.user.email:
             emails.append(request.user.email)
 
-        print('emails: ', emails)
+        print('emails:', emails)
         current_host = request.get_host()
         scheme = 'https' if request.is_secure() else 'http'
 
-        # Création de la réunion
-        meeting = Meeting.objects.create(
-            name=name,
-            password=password,
-            host=request.user
-        )
-        meeting.users.add(request.user)
-
-        # Si une date est planifiée, on met à jour le champ (exemple : created_at)
-        if date:
-            meeting.created_at = date
-            meeting.save()
-
-        # Construction du lien de réunion
-        meeting_url = f"{scheme}://{current_host}/home/{meeting.id}/"
-
-        # Envoi des invitations par email
-        subject = f"Invitation pour réunion : {meeting.name}"
-         
-        meeting_id=meeting.id,
-        for dest in emails:
-            context = {
-                "username": request.user.username,
-               
-                "date": date,
-                "time": time,
-               "meeting_name": meeting.name,
-                "login_url" :  f"http://{current_host}/home/{meeting_id}/"
-            }
-            email_sender(
-                subject=subject,
-                destination=dest,
-                template_path="emails/invitation.html",
-                context=context
+        try:
+            # Create the meeting
+            meeting = Meeting.objects.create(
+                name=name,
+                password=password,
+                host=request.user
             )
+            meeting.users.add(request.user)
 
-        # Message de confirmation
-        if date:
-            messages.info(
-                request,
-                f"Réunion planifiée pour le {date} à {time}. "
-                f"Le lien a été envoyé à {request.user.email} et aux invités."
-            )
-            return render(request, 'index.html')
+            # Validate and update date
+            if date:
+                try:
+                    meeting.created_at = datetime.strptime(date, '%Y-%m-%d')  # Adjust format as needed
+                    meeting.save()
+                except ValueError:
+                    messages.error(request, "Format de date invalide.")
+                    return render(request, 'create_meeting.html')
 
-        return redirect('home', meeting_id=meeting.id)
+            # Construct meeting URL
+            meeting_url = f"{scheme}://{current_host}/home/{meeting.id}/"
+
+            # Send email invitations
+            subject = f"Invitation pour réunion : {meeting.name}"
+            for dest in emails:
+                context = {
+                    "username": request.user.username,
+                    "date": date,
+                    "time": time,
+                    "meeting_name": meeting.name,
+                    "login_url": meeting_url
+                }
+                try:
+                    email_sender(
+                        subject=subject,
+                        destination=dest,
+                        template_path="emails/invitation.html",
+                        context=context
+                    )
+                except Exception as e:
+                    messages.error(request, f"Échec de l'envoi de l'email à {dest}: {str(e)}")
+
+            # Success message
+            if date:
+                messages.info(
+                    request,
+                    f"Réunion planifiée pour le {date} à {time}. "
+                    f"Le lien a été envoyé à {request.user.email} et aux invités."
+                )
+            else:
+                messages.success(request, "Réunion créée avec succès.")
+
+            return redirect('home', meeting_id=meeting.id)
+
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la création de la réunion : {str(e)}")
+            return render(request, 'create_meeting.html')
 
     return render(request, 'create_meeting.html')
-
-
 
 @login_required
 def contact(request):
@@ -752,7 +776,13 @@ def contact(request):
 
 
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+
+@login_required
 def gratos(request):
+    if not request.user.payment_card:
+        return redirect('register_card')
     meeting = Meeting.objects.create(name=f"{request.user.username}_home", password="1234", host=request.user )
     return redirect('home', meeting_id=meeting.id)
 
@@ -1577,27 +1607,47 @@ plans_paypal = [
 
 
 def abonnement_view(request):
+    plans_paypal = [
+        {"name": "Gratuit", "price": 0, "features": [
+            {"name": "Crédit d'appel", "value": "5h (Valable 1 mois)"},
+            {"name": "Traduction IA", "value": "Oui"},
+            {"name": "Renouvellement", "value": "Mensuel"},
+            {"name": "Essai gratuit", "value": "Non"},
+        ]},
+        {"name": "Basique", "price": 10, "features": [
+            {"name": "Crédit d'appel", "value": "10h (achat unique)"},
+            {"name": "Traduction IA", "value": "Oui"},
+            {"name": "Renouvellement", "value": "Manuel"},
+            {"name": "Essai gratuit", "value": "14 jours"},
+        ]},
+        {"name": "Hebdomadaire", "price": 10, "features": [
+            {"name": "Crédit d'appel", "value": "10h (abonnement)"},
+            {"name": "Traduction IA", "value": "Oui"},
+            {"name": "Renouvellement", "value": "Hebdomadaire"},
+            {"name": "Essai gratuit", "value": "14 jours"},
+        ]},
+        {"name": "Illimitee", "price": 30, "features": [
+            {"name": "Crédit d'appel", "value": "Illimité"},
+            {"name": "Traduction IA", "value": "Oui"},
+            {"name": "Renouvellement", "value": "Mensuel"},
+            {"name": "Essai gratuit", "value": "14 jours"},
+        ]},
+    ]
+
+    subscription = None
+    current_plan = "free"
     if request.user.is_authenticated:
         try:
             subscription = Subscription.objects.get(user=request.user)
-            current_plan = subscription.plan  # Supposons que Subscription a un champ `plan`
+            current_plan = subscription.plan
         except Subscription.DoesNotExist:
             subscription = None
-            current_plan = "free"
 
-        return render(request, "subscribe.html", {
-            "plans": plans_paypal,
-            "subscription": subscription,
-            "current_plan": current_plan
-        })
-    else:
-         return render(request, "subscribe.html", {
-            "plans": plans_paypal,
-            # "subscription": subscription,
-            # "current_plan": current_plan
-        })
-
-
+    return render(request, "subscribe.html", {
+        "plans": plans_paypal,
+        "subscription": subscription,
+        "current_plan": current_plan
+    })
 
 def subscription_view(request):
     try:
@@ -1608,50 +1658,140 @@ def subscription_view(request):
     return render(request, "subscriptions.html", {"subscription": subscription})
 
 
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from paypal.standard.forms import PayPalPaymentsForm
+
+from django.utils.timezone import now
+
+
 @login_required
 def paiement_paypal(request, plan, montant):
-     
-    # Assurez-vous que le plan est valide et dans la liste
-    if plan not in ['Gratuit', 'Basique', 'hebdomadaire', 'illimitee']:
+    valid_plans = ['basique', 'hebdomadaire', 'illimitee']
+    if plan.lower() not in valid_plans:
         return render(request, "erreur.html", {"message": "Plan invalide"})
 
+    user = request.user
     paypal_dict = {
+        
+        
         "business": settings.PAYPAL_RECEIVER_EMAIL,
-        "amount": montant,
-        "item_name": f"Yomla Crédit {montant}€",
-        "invoice": f"Payment{request.user.id}{montant}{int(now().timestamp())}",
+        "item_name": f"Yomla Crédit {plan.capitalize()} Plan",
+        "invoice": f"INV-{plan.lower()}-{user.id}-{int(now().timestamp())}",
         "currency_code": "EUR",
-        "notify_url": request.build_absolute_uri("/paypal-ipn/"),
+        "amount": montant,
+        "notify_url": request.build_absolute_uri("/paypal/"),
         "return_url": request.build_absolute_uri(f"/paiement-reussi/{plan}/"),
-        "cancel_return": request.build_absolute_uri("/"),
-        "custom": request.user.id,  # Permet d'identifier l'utilisateur
+        "cancel_return": request.build_absolute_uri("/paiement-annule/"),
+        "custom": str(user.id),  # ID utilisateur pour IPN
+        #"cmd": "_xclick-subscriptions",  # Mode abonnement
+        "a1": "0.00",  # Montant du trial : gratuit
+        "p1": 14,      # Durée du trial : 14 jours
+       "t1": "D",     # Unité : jours
+       "a3": montant, # Montant régulier après trial
+       "p3": 1,       # Durée de la période régulière
     }
 
-    # Pour les plans d'abonnement, nous ajoutons des options spécifiques
-    if plan in ['hebdomadaire', 'illimitee']:
-        paypal_dict["cmd"] = "_xclick-subscriptions"
-        paypal_dict["item_name"] = f"Yomla Crédit {plan.capitalize()} Plan"
-        paypal_dict["invoice"] = f"INV-{plan}-{request.user.id}-{now().timestamp()}"
-        paypal_dict["a3"] = montant  # Le montant par période
-        paypal_dict["p3"] = 1  # Période de facturation (1 signifie hebdomadaire ou mensuel selon t3)
-        paypal_dict["src"] = 1  # Renouvellement automatique activé
-        paypal_dict["sra"] = 1  # Activer le renouvellement automatique
-
-        # Fréquence du renouvellement (S pour hebdomadaire, M pour mensuel)
-        if plan == 'hebdomadaire':
-            paypal_dict["t3"] = "W"  # Renouvellement chaque semaine
-        elif plan == 'illimitee':
-            paypal_dict["t3"] = "M"  # Renouvellement chaque mois
-
+    if plan.lower() == 'basique':
+        paypal_dict["t3"] = "M"  # Mensuel (mais 1 seul cycle)
+        paypal_dict["srt"] = 1   # 1 paiement après trial
+        paypal_dict["src"] = 0   # Pas de renouvellement automatique
+    elif plan.lower() == 'hebdomadaire':
+        paypal_dict["t3"] = "W"  # Hebdomadaire
+        paypal_dict["src"] = 1   # Renouvellement automatique
+        paypal_dict["sra"] = 1   # Réessayer si échec
+    elif plan.lower() == 'illimitee':
+        paypal_dict["t3"] = "M"  # Mensuel
+        paypal_dict["src"] = 1   # Renouvellement automatique
+        paypal_dict["sra"] = 1   # Réessayer si échec
+    print("Paypal dict: ", paypal_dict)
     form = PayPalPaymentsForm(initial=paypal_dict)
-    return render(request, "paiement.html", {"form": form})
+    return render(request, "paiement.html", {"form": form, "plan": plan, "montant": montant})
 
-def paiement_reussi(request, plan):
+"""def paiement_reussi(request, plan):
     #plan_actuel = [i for i in plans_paypal if i["name"]=="plan"][0]
     subscription, _ = Subscription.objects.get_or_create(user=request.user)
     subscription.upgrade(plan)
     messages.success(request, "Paiement reussi!")
+    return redirect("index")"""
+
+def paiement_reussi(request, plan):
+    subscription, _ = Subscription.objects.get_or_create(user=request.user)
+    subscription.upgrade(plan)  # Appliquer le plan (au cas où IPN est en retard)
+    messages.success(request, f"Inscription réussie ! Votre essai gratuit de 14 jours pour le plan {plan.capitalize()} est activé.")
     return redirect("index")
 
 def paiement_annule(request):
     return render(request, "index.html")
+
+
+
+
+@login_required
+def register_card(request):
+    if request.method == 'POST':
+        card_number = request.POST.get('card_number')
+        expiry_date = request.POST.get('expiry_date')
+        cvv = request.POST.get('cvv')
+
+        # Vérifications basiques (à améliorer)
+        if not card_number or not expiry_date or not cvv:
+            messages.error(request, "Tous les champs sont obligatoires.")
+            return render(request, 'register_card.html', {'card_number': card_number, 'expiry_date': expiry_date, 'cvv': cvv})
+
+        # Crée ou met à jour la carte pour l'utilisateur
+        PaymentCard.objects.update_or_create(
+            user=request.user,
+            defaults={'card_number': card_number, 'expiry_date': expiry_date, 'cvv': cvv}
+        )
+       
+        messages.success(request, "Carte enregistrée avec succès. Vous pouvez maintenant profiter du plan gratuit.")
+        return redirect('index')
+
+    return render(request, 'register_card.html')
+
+from paypal.standard.models import ST_PP_COMPLETED
+from paypal.standard.ipn.signals import valid_ipn_received
+from django.dispatch import receiver
+
+from django.utils.timezone import now, timedelta
+
+@receiver(valid_ipn_received)
+def paypal_ipn_handler(sender, **kwargs):
+    ipn = sender
+    try:
+        user_id = int(ipn.custom)
+        user = User.objects.get(id=user_id)
+        subscription, created = Subscription.objects.get_or_create(user=user)
+        
+        # Extraire le plan depuis item_name (ex. : "Yomla Crédit Basique Plan")
+        plan = ipn.item_name.split()[-2].lower() if ipn.item_name else None
+        
+        if ipn.txn_type == 'subscr_signup' and plan in ['basique', 'hebdomadaire', 'illimitee']:
+            # Activer le trial
+            subscription.upgrade(plan)
+            print(f"Trial de 14 jours activé pour {user.username} - Plan: {plan}")
+        
+        elif ipn.txn_type == 'subscr_payment' and ipn.payment_status == ST_PP_COMPLETED:
+            # Paiement reçu après trial
+            montant = float(ipn.mc_gross)
+            if plan == 'illimitee':
+                subscription.end_date = now() + timedelta(days=30)
+            elif plan == 'hebdomadaire':
+                subscription.end_date = now() + timedelta(days=7)
+            elif plan == 'basique':
+                subscription.credit_minutes += 600  # Recharge 10h
+            subscription.trial_end_date = None  # Trial terminé
+            subscription.save()
+            print(f"Paiement reçu pour {user.username} - Plan: {plan} - Montant: {montant}")
+        
+        elif ipn.txn_type == 'subscr_cancel':
+            # Annulation : désactiver l'abonnement
+            subscription.end_date = now()
+            subscription.trial_end_date = None
+            subscription.save()
+            print(f"Abonnement annulé pour {user.username}")
+    
+    except (User.DoesNotExist, ValueError) as e:
+        print(f"Erreur dans IPN: {e}")

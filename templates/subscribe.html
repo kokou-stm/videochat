@@ -1,225 +1,224 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Videocall</title>
+    <title>Abonnements - Yomla</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <style>
-		@import url("https://fonts.googleapis.com/css2?family=Redressed&family=Merriweather:wght@300;400;700&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Redressed&family=Merriweather:wght@300;400;700&display=swap");
 
-		.redressed {
-			font-family: "Redressed", serif;
-		}
+        .redressed {
+            font-family: "Redressed", serif;
+        }
 
-		.merriweather {
-			font-family: "Merriweather", serif;
-		}
-	
-		body {
-			margin-top: 20px;
-			background: #DCDCDC;
-		}
+        .merriweather {
+            font-family: "Merriweather", serif;
+        }
 
-		.pricing-content {
-			position: relative;
-		}
+        body {
+            margin-top: 20px;
+            background: #DCDCDC;
+        }
 
-		.pricing_design {
-			position: relative;
-			margin: 0px 15px;
-		}
+        .pricing-content {
+            position: relative;
+            padding: 50px 0;
+        }
 
-		.pricing_design .single-pricing {
-			background: #0aa798;
-			padding: 60px 40px;
-			border-radius: 30px;
-			box-shadow: 0 10px 40px -10px rgba(2, 136, 138, 0.2);
-			position: relative;
-			z-index: 1;
-		}
+        .pricing_design {
+            position: relative;
+            margin: 0 15px;
+        }
 
-		.pricing_design .single-pricing:before {
-			content: "";
-			background-color: #fff;
-			width: 100%;
-			height: 100%;
-			border-radius: 18px 18px 190px 18px;
-			border: 1px solid #eee;
-			position: absolute;
-			bottom: 0;
-			right: 0;
-			z-index: -1;
-		}
+        .pricing_design .single-pricing {
+            background: #0aa798;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px -10px rgba(2, 136, 138, 0.2);
+            position: relative;
+            z-index: 1;
+            color: #fff;
+        }
 
-		.price-head {}
+        .pricing_design .single-pricing:before {
+            content: "";
+            background-color: #fff;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px 18px 190px 18px;
+            border: 1px solid #eee;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            z-index: -1;
+        }
 
-		.price-head h2 {
-			margin-bottom: 20px;
-			font-size: 26px;
-			font-weight: 600;
-		}
+        .price-head h2 {
+            margin-bottom: 20px;
+            font-size: 26px;
+            font-weight: 600;
+        }
 
-		.price-head h1 {
-			font-weight: 600;
-			margin-top: 30px;
-			margin-bottom: 5px;
-		}
+        .price-head h1 {
+            font-weight: 600;
+            margin-top: 30px;
+            margin-bottom: 5px;
+            color: #fff;
+        }
 
-		.price-head span {}
+        .price-head .active-label {
+            font-size: 14px;
+            background: #e67e22;
+            padding: 5px 10px;
+            border-radius: 15px;
+            display: inline-block;
+            margin-bottom: 10px;
+            color: #fff;
+        }
 
-		.single-pricing ul {
-			list-style: none;
-			margin-top: 30px;
-		}
+        .single-pricing ul {
+            list-style: none;
+            margin-top: 30px;
+            padding-left: 0;
+        }
 
-		.single-pricing ul li {
-			line-height: 36px;
-		}
+        .single-pricing ul li {
+            line-height: 36px;
+            color: #fff;
+        }
 
-		.single-pricing ul li i {
-			background: #554c86;
-			color: #fff;
-			width: 20px;
-			height: 20px;
-			border-radius: 30px;
-			font-size: 11px;
-			text-align: center;
-			line-height: 20px;
-			margin-right: 6px;
-		}
+        .single-pricing ul li i {
+            background: #fff;
+            color: #0aa798;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 11px;
+            text-align: center;
+            line-height: 20px;
+            margin-right: 10px;
+        }
 
-		.pricing-price {}
+        .price_btn {
+            background: #fff;
+            color: #0aa798;
+            padding: 10px 30px;
+            display: inline-block;
+            margin-top: 20px;
+            border-radius: 2px;
+            transition: 0.3s;
+            font-weight: 600;
+        }
 
-		.price_btn {
-			background: #0a7c6b;
-			padding: 10px 30px;
-			color: #fff;
-			display: inline-block;
-			margin-top: 20px;
-			border-radius: 2px;
-			-webkit-transition: 0.3s;
-			transition: 0.3s;
-		}
+        .price_btn:hover {
+            background: #0aa1d6;
+            color: #fff;
+        }
 
-		.price_btn:hover {
-			background: #0aa1d6;
-		}
+        a {
+            text-decoration: none;
+        }
 
-		a {
-			text-decoration: none;
-		}
+        .section-title {
+            margin-bottom: 60px;
+        }
 
-		.section-title {
-			margin-bottom: 60px;
-		}
+        .section-title h2 {
+            font-size: 45px;
+            font-weight: 600;
+            color: #333;
+            text-transform: capitalize;
+        }
 
-		.text-center {
-			text-align: center !important;
-		}
+        .pricing_design.active-plan .single-pricing {
+            background: #ff9900; /* Jaune pour les plans actifs et Gratuit */
+            border: 2px solid #e67e22;
+        }
 
-		.section-title h2 {
-			font-size: 45px;
-			font-weight: 600;
-			margin-top: 0;
-			position: relative;
-			text-transform: capitalize;
-		}
-		.pricing_design.active-plan .single-pricing {
-    background: #ff9900;  /* Une couleur différente, vous pouvez la modifier */
-    border: 2px solid #e67e22;  /* Un bord pour faire ressortir le plan */
-}
+        .pricing_design.active-plan .price_btn {
+            background: #e67e22;
+            color: #fff;
+        }
 
-.pricing_design.active-plan .price_btn {
-    background: #e67e22;  /* Changer le fond du bouton de commande pour correspondre à l'active-plan */
-}
+        .pricing_design.active-plan .price-head h1 {
+            color: #fff;
+        }
 
-.pricing_design.active-plan .price-head h1 {
-    color: rgb(33, 29, 29);  /* Mettre le prix en blanc pour plus de visibilité */
-}
-
-	</style>
+        /* Styles pour le texte dans les plans actifs */
+        .active-plan .price-head h2,
+        .active-plan .price-head span,
+        .active-plan ul li,
+        .active-plan ul li b,
+        .active-plan ul li i {
+            color: #1f1b1b !important;
+        }
+    </style>
 </head>
-
 <body>
-	
-	
     <section id="pricing" class="pricing-content section-padding redressed">
         <div class="container">
             <div class="section-title text-center">
-                <h2><a href="{% url 'index' %}" class="btn btn-secondary mx-3"><- Home</a> Pricing Plans</h2>
-                <p>Choose a plan that fits your needs.</p>
+                <h2>
+                    <a href="{% url 'index' %}" class="btn btn-secondary mx-3"><i class="fas fa-arrow-left"></i> Accueil</a>
+                    Plans d'abonnement
+                </h2>
+                <p>Choisissez un plan adapté à vos besoins.</p>
             </div>
             <div class="row text-center">
                 {% for plan in plans %}
-               
-
-				<div class="col-lg-3 col-sm-6">
-					<div class="pricing_design {% if current_plan == plan.name %}active-plan{% endif %}">
-						<div class="single-pricing">
-							<div class="price-head">
-								<h2>{{ plan.name }}</h2>
-								{% if current_plan == plan.name %}
-								<h6 href="#" class="">(Actif)</h6>
-							     {% endif %}
-
-								<h1>${{ plan.price }}</h1>
-								{% if plan.name == 'hebdomadaire' %}
-								<span>/Week</span>
-								{% elif plan.name == 'Basique' %}
-								<span>/Pay as you go</span>
-								{% else %}
-								<span>/Monthly</span>
-								{% endif %}
-							</div>
-							<ul class="merriweather text-start">
-								{% for feature in plan.features %}
-								<li>
-									<b>{{ feature.name }}</b>: 
-									{% if feature.value == "Oui" %}
-										<input type="checkbox" checked disabled> 
-									{% elif feature.value == "Non" %}
-										<input type="checkbox" disabled> 
-									{% else %}
-										{{ feature.value }}
-									{% endif %}
-								</li>
-								{% endfor %}
-							</ul>
-							<div class="pricing-price"></div>
-							
-							{% if plan.name == 'Gratuit' %}
-							<a href="{% url 'gratos' %}" class="price_btn">Free</a>
-							 {% else %}
-							 <a href="{% url 'paiement_paypal' plan.name plan.price %}" class="price_btn">Essai Gratuit</a>
-							{% endif %}
-						</div>
-					</div>
-				</div>
-
-
+                <div class="col-lg-3 col-sm-6 mb-4">
+                    <div  style="color: #333;" class="pricing_design {% if current_plan|lower == plan.name|lower or plan.name|lower == 'gratuit' %}active-plan{% endif %}">
+                        <div style="color: #333;" class="single-pricing">
+                            <div style="color: #333;" class="price-head">
+                                <h2 style="color: #333;">{{ plan.name }}</h2>
+                                {% if current_plan|lower == plan.name|lower %}
+                                    <span class="active-label" style="color: #333;">Plan Actif</span>
+                                {% elif plan.name|lower == 'gratuit' and not current_plan %}
+                                    <span class="active-label">Plan par défaut</span>
+                                {% endif %}
+                                <h1 style="color: #333;">{{ plan.price }}€</h1>
+                                <span style="color: #333;">
+                                    {% if plan.name|lower == 'hebdomadaire' %}
+                                        /Semaine
+                                    {% elif plan.name|lower == 'basique' %}
+                                        /Achat unique
+                                    {% elif plan.name|lower == 'illimitee' %}
+                                        /Mois
+                                    {% else %}
+                                        Gratuit
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <ul class="merriweather text-start" style="color: #333;">
+                                {% for feature in plan.features %}
+                                <li style="color: #333;">
+                                    <i class="fas fa-check"></i>
+                                    <b style="color: #333;">{{ feature.name }}</b>: {{ feature.value }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% if plan.name|lower == 'gratuit' %}
+                                {% if not request.user.payment_card %}
+                                    <a href="{% url 'register_card' %}" class="price_btn">Enregistrer une carte pour le plan gratuit</a>
+                                {% else %}
+                                    <a href="{% url 'index' %}" class="price_btn">Plan Actif</a>
+                                {% endif %}
+                            {% else %}
+                                <a href="{% url 'paiement_paypal' plan.name plan.price %}" class="price_btn">
+                                    Essai Gratuit 14 Jours
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
             </div>
         </div>
     </section>
-   
-	
-	<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js'></script>
-
-    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-

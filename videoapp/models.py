@@ -133,38 +133,72 @@ class UserSubscription(models.Model):
 
 
 
+from django.utils.timezone import now, timedelta
 
 class Subscription(models.Model):
-   
-    
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     plan = models.CharField(max_length=50, default="free")
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
-    credit_minutes = models.IntegerField(default=300)  # Free: 5h, Basic: à recharger
-    
+    credit_minutes = models.IntegerField(default=300)  # Free: 5h
+    trial_end_date = models.DateTimeField(null=True, blank=True)  # Date de fin du trial
+
+    def is_in_trial(self):
+        if self.trial_end_date and now() < self.trial_end_date:
+            return True
+        return False
+
     def is_active(self):
+        if self.is_in_trial():
+            return True
         return self.end_date is None or self.end_date >= now()
-    
+
     def deduct_minutes(self, minutes):
         if self.plan == "basique":
             self.credit_minutes = max(0, self.credit_minutes - minutes)
             self.save()
-    
+
     def add_credits(self, minutes):
-        if self.plan == "basic":
+        if self.plan == "basique":
             self.credit_minutes += minutes
             self.save()
-    
+
     def upgrade(self, plan):
-        self.plan = plan
-        if plan.lower() == "illimitee":
-            self.end_date = now() + timedelta(days=30)
-        if plan.lower() == "hebdomadaire":
-            self.end_date = now() + timedelta(days=7)
-        
-        elif plan.lower() == "basique":
+        self.plan = plan.lower()
+        self.start_date = now()
+
+        # Activer un trial de 14 jours pour tous les plans payants
+        if plan.lower() in ['basique', 'hebdomadaire', 'illimitee']:
+            self.trial_end_date = now() + timedelta(days=14)
+
+        if plan.lower() == 'illimitee':
+            self.end_date = now() + timedelta(days=30)  # Après trial
+        elif plan.lower() == 'hebdomadaire':
+            self.end_date = now() + timedelta(days=7)   # Après trial
+        elif plan.lower() == 'basique':
             self.credit_minutes += 600  # Recharge 10h
-        
-        
+            self.end_date = None  # Pas de renouvellement automatique
+        elif plan.lower() == 'free':
+            self.trial_end_date = None  # Pas de trial pour gratuit
+            self.end_date = None
+
         self.save()
+
+    def __str__(self):
+        return f"{self.user.username} - {self.plan}"
+    
+
+
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class PaymentCard(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='payment_card')
+    card_number = models.CharField(max_length=16, blank=True, null=True)  # Placeholder, stocké en clair ici (non sécurisé)
+    expiry_date = models.CharField(max_length=5, blank=True, null=True)   # Format MM/YY
+    cvv = models.CharField(max_length=4, blank=True, null=True)           # 3-4 chiffres
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Carte de {self.user.username}"

@@ -153,7 +153,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+import certifi, os
 
+os.environ['SSL_CERT_FILE'] = certifi.where()
  
 PERCENT=0
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -165,6 +167,8 @@ EMAIL_HOST_PASSWORD = "rfqzyhocddgmehbe"
 EMAIL_SSL_CERTFILE = None  # ignore SSL certificate
 EMAIL_SSL_KEYFILE = None
 AZURE_OPENAI_API_KEY=os.getenv("AZURE_OPENAI_API_KEY")
+
+
  
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'login'

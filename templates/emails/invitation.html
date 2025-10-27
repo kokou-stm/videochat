@@ -1,28 +1,70 @@
+
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
-    <title>Invitation à une réunion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitation à une Réunion Yomla</title>
 </head>
-
-<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin:0; padding:0;">
-    <div
-        style="background-color: #ffffff; max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-        <h1 style="color:#007bff; text-align:center;">Invitation à une Réunion Yomla</h1>
-        <div style="font-size:16px; color:#333; margin-bottom:20px;">
-            <p>Bonjour,</p>
-            <p>{{username}} vous invite à rejoindre la réunion <strong>{{meeting_name}}</strong> sur
-                <strong>Yomla</strong>.</p>
-            <p>Pour rejoindre la réunion, cliquez sur le bouton ci-dessous à {{date}} {{time}} :</p>
-            <a href="{{login_url}}"
-                style="display:inline-block; background-color:#007bff; color:white; padding:10px 20px; border-radius:5px; text-decoration:none;">Rejoindre
-                la Réunion</a>
-        </div>
-        <div style="font-size:14px; color:#777; text-align:center; margin-top:30px;">
-            <p>Nous avons hâte de vous retrouver sur Yomla.</p>
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f7fa;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f7fa; padding: 40px 0;">
+        <tr>
+            <td align="center" style="padding: 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+                    <!-- En-tête -->
+                    <tr>
+                        <td style="padding: 48px 40px 32px 40px; text-align: center; border-bottom: 1px solid #e8ebed;">
+                            <h1 style="margin: 0; padding: 0; font-size: 28px; font-weight: 600; color: #1a73e8; line-height: 1.3;">Invitation à une Réunion Yomla</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Corps du message -->
+                    <tr>
+                        <td style="padding: 40px 40px 0 40px;">
+                            <p style="margin: 0 0 20px 0; padding: 0; font-size: 16px; line-height: 1.6; color: #2c3e50;">Bonjour,</p>
+                            <p style="margin: 0 0 24px 0; padding: 0; font-size: 16px; line-height: 1.6; color: #2c3e50;">
+                                Vous avez été invité(e) par <strong style="color: #1a1a1a;">{{ username }}</strong> à rejoindre la réunion <strong style="color: #1a1a1a;">{{ meeting_name }}</strong> sur la plateforme Yomla.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Bouton d'action centré -->
+                    <tr>
+                        <td style="padding: 32px 40px 40px 40px;" align="center">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td align="center" style="border-radius: 6px; background-color: #1a73e8;">
+                                        <a href="{{ login_url }}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #1a73e8; line-height: 1;">Rejoindre la réunion</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Séparateur -->
+                    <tr>
+                        <td style="padding: 0 40px;">
+                            <div style="border-top: 1px solid #e8ebed; margin: 0;"></div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Pied de page -->
+                    <tr>
+                        <td style="padding: 32px 40px 40px 40px; text-align: center;">
+                            <p style="margin: 0 0 16px 0; padding: 0; font-size: 14px; line-height: 1.5; color: #64748b;">
+                                Nous sommes ravis de vous accueillir sur Yomla, votre solution pour des réunions en ligne professionnelles et efficaces.
+                            </p>
+                            <p style="margin: 0 0 20px 0; padding: 0; font-size: 14px; line-height: 1.5; color: #64748b;">
+                                Pour toute question, n'hésitez pas à contacter notre <a href="mailto:support@yomla.com" style="color: #1a73e8; text-decoration: none; font-weight: 500;">équipe support</a>.
+                            </p>
+                            <p style="margin: 0; padding: 0; font-size: 12px; color: #94a3b8;">
+                                &copy; 2025 Yomla. Tous droits réservés.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
-
 </html>
