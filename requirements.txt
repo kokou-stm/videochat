@@ -23,4 +23,3 @@ sentence-transformers
 tiktoken 
 torch 
 tqdm 
-transformers 

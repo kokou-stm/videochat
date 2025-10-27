@@ -706,7 +706,7 @@ def create_meeting(request):
                     meeting.save()
                 except ValueError:
                     messages.error(request, "Format de date invalide.")
-                    return render(request, 'create_meeting.html')
+                    return render(request, 'index.html')
 
             # Construct meeting URL
             meeting_url = f"{scheme}://{current_host}/home/{meeting.id}/"
@@ -741,13 +741,13 @@ def create_meeting(request):
             else:
                 messages.success(request, "Réunion créée avec succès.")
 
-            return redirect('home', meeting_id=meeting.id)
+            return redirect('home_with_meeting', meeting_id=meeting.id)
 
         except Exception as e:
             messages.error(request, f"Erreur lors de la création de la réunion : {str(e)}")
-            return render(request, 'create_meeting.html')
+            return render(request, 'home.html')
 
-    return render(request, 'create_meeting.html')
+    return render(request, 'home.html')
 
 @login_required
 def contact(request):
@@ -1423,8 +1423,10 @@ def boat(request):
                 openai_api_type='azure',
                 azure_endpoint= "https://ablam-mfyf5f8z-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-5-chat/chat/completions?api-version=2025-01-01-preview",
             )
-
-        folder_path = os.path.join(settings.MEDIA_ROOT, "videocall_boat")
+        result = llm.invoke([HumanMessage(content=question)])
+        print("Result: ", result.content)
+        """folder_path = os.path.join(settings.MEDIA_ROOT, "videocall_boat")
+        print("Folder path: ", folder_path)
         vectordb =FAISS.load_local(folder_path, embeddings , allow_dangerous_deserialization=True )
         memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -1443,10 +1445,10 @@ def boat(request):
         )
     
         #question = "Qu'est ce que la cuisine?"
-        result = qa.invoke({"question": question})
+        result = qa.invoke({"question": question})"""
         
 
-        return JsonResponse({'response': result["answer"],})
+        return JsonResponse({'response': result.content})
     
 
 
