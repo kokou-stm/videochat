@@ -10,7 +10,7 @@ huggingface-hub==0.35.3
 langchain
 langchain-community
 langchain-core
-langchain-huggingface==0.1.0
+langchain-huggingface
 langchain-openai==0.2.3
 langchain-text-splitters==0.3.2
 langsmith==0.1.147
