@@ -88,27 +88,59 @@
         </button>
 
         <!-- Chatbot Modal -->
-        <div class="modal fade" id="chatbot-modal" tabindex="-1" aria-labelledby="chatbotLabel" aria-hidden="true"
-            data-bs-backdrop="false">
-            <div class="modal-dialog">
-                <div class="modal-content bg-dark">
-                    <div class="modal-header">
-                        <h5 class="modal-title text-light" id="chatbotLabel"><i class="fas fa-robot"></i> Chat avec l'IA
-                        </h5>
-                        <button type="button" class="btn-close bg-light" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="chat-messages"></div>
-                        <div class="input-group mt-3">
-                            <input type="text" id="user_askinput" class="form-control"
-                                placeholder="Posez votre question...">
-                            <button class="btn btn-primary" id="send-button" onclick="chat_send()">Envoyer</button>
+<div class="modal fade" id="chatbot-modal" tabindex="-1" aria-labelledby="chatbotLabel" aria-hidden="true"
+    data-bs-backdrop="false">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title text-light" id="chatbotLabel">Chat avec l'IA</h5>
+                <button type="button" class="btn-close bg-light" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="chat-messages"></div>
+                <div class="input-group mt-3 position-relative">
+                    <input type="text" id="user_askinput" class="form-control"
+                        placeholder="Posez votre question...">
+                    
+                    <!-- Bouton Emoji -->
+                    <button class="btn btn-outline-light" id="emoji-button" type="button">
+                        😊
+                    </button>
+
+                    <!-- Sélecteur d'emojis (caché par défaut) -->
+                    <div id="emoji-picker" class="position-absolute bottom-100 end-0 mb-2 p-2 bg-white border rounded shadow"
+                        style="display: none; z-index: 1000; max-width: 250px;">
+                        <div class="row g-1 text-center">
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">😊</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">😂</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">❤️</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">👍</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">🙌</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">🎉</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">🔥</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">💯</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">👏</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">😎</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">🤔</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">😢</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">😡</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">🤩</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">🥳</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">😴</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">🤗</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">🙏</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">💪</button></div>
+                            <div class="col-2"><button type="button" class="btn btn-light emoji-btn p-1" style="font-size: 1.2rem;">✨</button></div>
                         </div>
                     </div>
+
+                    <button class="btn btn-primary" id="send-button" onclick="chat_send()">Envoyer</button>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
 
 
@@ -278,7 +310,7 @@
 
 
 
-                        <div class="input-group mb-2 " style="max-width: 50vh;">
+                        <div class="input-group mb-2 position-relative" style="max-width: 50vh;">
 
                             <button id="importButton" class="input-group-text" id="basic-addon1"><i
                                     class="fas fa-file-upload"></i></button>
@@ -286,6 +318,37 @@
                             <input type="text" id="id_message_send_input" class="form-control" placeholder="Message"
                                 aria-label="Message" aria-describedby="basic-addon1">
 
+                            <!-- Bouton Emoji pour le chat principal -->
+                            <button class="btn btn-outline-secondary" id="main-chat-emoji-button" type="button">
+                                😊
+                            </button>
+
+                            <!-- Sélecteur d'emojis pour le chat principal (caché par défaut) -->
+                            <div id="main-chat-emoji-picker" class="position-absolute bottom-100 end-0 mb-2 p-2 bg-white border rounded shadow"
+                                style="display: none; z-index: 1000; max-width: 250px;">
+                                <div class="row g-1 text-center">
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">😊</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">😂</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">❤️</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">👍</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">🙌</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">🎉</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">🔥</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">💯</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">👏</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">😎</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">🤔</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">😢</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">😡</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">🤩</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">🥳</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">😴</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">🤗</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">🙏</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">💪</button></div>
+                                    <div class="col-2"><button type="button" class="btn btn-light main-chat-emoji-btn p-1" style="font-size: 1.2rem;">✨</button></div>
+                                </div>
+                            </div>
 
                             <button>
                                 <div class="dropdown redressed">
@@ -489,7 +552,7 @@
                                                     <span>{{ utilisateurs.username }}</span>
                                                     <select id="c" class="">
                                                         <option onclick="addCoAdmin({{ utilisateurs.id }})"> co-hôte
-                                                        </option>
+                                                            </option>
                                                         <option onclick="removeCoAdmin({{ utilisateurs.id }})"> Retirer
                                                             co-hôte</option>
                                                     </select>
@@ -1343,6 +1406,90 @@
         // Exécuter la vérification toutes les 2 secondes
         setInterval(checkIfHost, 2000);
     </script>
+    
+    <script>
+    // Gestion du sélecteur d'emojis pour le chat avec l'IA
+    document.addEventListener("DOMContentLoaded", function () {
+        const emojiButton = document.getElementById('emoji-button');
+        const emojiPicker = document.getElementById('emoji-picker');
+        const userInput = document.getElementById('user_askinput');
+
+        // Ouvrir/fermer le picker
+        emojiButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Insérer l'emoji dans l'input
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const emoji = this.textContent;
+                const start = userInput.selectionStart;
+                const end = userInput.selectionEnd;
+                const text = userInput.value;
+
+                userInput.value = text.substring(0, start) + emoji + text.substring(end);
+                userInput.focus();
+                userInput.selectionStart = userInput.selectionEnd = start + emoji.length;
+
+                emojiPicker.style.display = 'none'; // Fermer après sélection
+            });
+        });
+
+        // Fermer le picker si clic ailleurs
+        document.addEventListener('click', function (e) {
+            if (!emojiButton.contains(e.target) && !emojiPicker.contains(e.target)) {
+                emojiPicker.style.display = 'none';
+            }
+        });
+
+        // Support clavier : Enter pour envoyer
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                chat_send();
+            }
+        });
+    });
+
+    // Gestion du sélecteur d'emojis pour le chat principal
+    document.addEventListener("DOMContentLoaded", function () {
+        const mainChatEmojiButton = document.getElementById('main-chat-emoji-button');
+        const mainChatEmojiPicker = document.getElementById('main-chat-emoji-picker');
+        const mainChatInput = document.getElementById('id_message_send_input');
+
+        // Ouvrir/fermer le picker du chat principal
+        mainChatEmojiButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            mainChatEmojiPicker.style.display = mainChatEmojiPicker.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Insérer l'emoji dans l'input du chat principal
+        document.querySelectorAll('.main-chat-emoji-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const emoji = this.textContent;
+                const start = mainChatInput.selectionStart;
+                const end = mainChatInput.selectionEnd;
+                const text = mainChatInput.value;
+
+                mainChatInput.value = text.substring(0, start) + emoji + text.substring(end);
+                mainChatInput.focus();
+                mainChatInput.selectionStart = mainChatInput.selectionEnd = start + emoji.length;
+
+                mainChatEmojiPicker.style.display = 'none'; // Fermer après sélection
+            });
+        });
+
+        // Fermer le picker si clic ailleurs
+        document.addEventListener('click', function (e) {
+            if (!mainChatEmojiButton.contains(e.target) && !mainChatEmojiPicker.contains(e.target)) {
+                mainChatEmojiPicker.style.display = 'none';
+            }
+        });
+
+        // Support clavier : Enter pour envoyer (déjà géré par les autres scripts)
+    });
+</script>
+
  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
   <script defer>

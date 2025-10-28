@@ -159,7 +159,7 @@
     </style>
 </head>
 <body>
-    <section id="pricing" class="pricing-content section-padding redressed">
+    <section id="pricing" class="pricing-content section-padding merriweather">
         <div class="container">
             <div class="section-title text-center">
                 <h2>
@@ -171,17 +171,17 @@
             <div class="row text-center">
                 {% for plan in plans %}
                 <div class="col-lg-3 col-sm-6 mb-4">
-                    <div  style="color: #333;" class="pricing_design {% if current_plan|lower == plan.name|lower or plan.name|lower == 'gratuit' %}active-plan{% endif %}">
-                        <div style="color: #333;" class="single-pricing">
-                            <div style="color: #333;" class="price-head">
-                                <h2 style="color: #333;">{{ plan.name }}</h2>
+                    <div  style="color: #3a3939;" class="pricing_design {% if current_plan|lower == plan.name|lower or plan.name|lower == 'gratuit' %}active-plan{% endif %}">
+                        <div style="color: #454343;" class="single-pricing">
+                            <div style="color: #454343;" class="price-head">
+                                <h2 style="color: #454343;">{{ plan.name }}</h2>
                                 {% if current_plan|lower == plan.name|lower %}
-                                    <span class="active-label" style="color: #333;">Plan Actif</span>
+                                    <span class="active-label" style="color: #454343;">Plan Actif</span>
                                 {% elif plan.name|lower == 'gratuit' and not current_plan %}
                                     <span class="active-label">Plan par défaut</span>
                                 {% endif %}
-                                <h1 style="color: #333;">{{ plan.price }}€</h1>
-                                <span style="color: #333;">
+                                <h1 style="color: #454343;">{{ plan.price }}€</h1>
+                                <span style="color: #454343;">
                                     {% if plan.name|lower == 'hebdomadaire' %}
                                         /Semaine
                                     {% elif plan.name|lower == 'basique' %}
@@ -193,11 +193,11 @@
                                     {% endif %}
                                 </span>
                             </div>
-                            <ul class="merriweather text-start" style="color: #333;">
+                            <ul class="merriweather text-start" style="color: #454343;">
                                 {% for feature in plan.features %}
-                                <li style="color: #333;">
+                                <li style="color: #454343;">
                                     <i class="fas fa-check"></i>
-                                    <b style="color: #333;">{{ feature.name }}</b>: {{ feature.value }}
+                                    <b style="color: #454343;">{{ feature.name }}</b>: {{ feature.value }}
                                 </li>
                                 {% endfor %}
                             </ul>
