@@ -23,3 +23,5 @@ sentence-transformers
 tiktoken 
 torch 
 tqdm 
+psycopg2-binary>=2.9
+
