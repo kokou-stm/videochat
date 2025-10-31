@@ -198,6 +198,10 @@ class PaymentCard(models.Model):
     expiry_date = models.CharField(max_length=5, blank=True, null=True)   # Format MM/YY
     cvv = models.CharField(max_length=4, blank=True, null=True)           # 3-4 chiffres
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['card_number', 'expiry_date', 'cvv'], name='unique_card_triplet')
+        ]
     def __str__(self):
         return f"Carte de {self.user.username}"

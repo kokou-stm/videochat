@@ -813,7 +813,11 @@ def gratos(request):
 def home(request, meeting_id=None):
     
     if meeting_id:
+        if not Meeting.objects.filter(id=meeting_id).exists():
+            messages.error(request, "Réunion introuvable.")
+            return redirect('index')
         meeting = Meeting.objects.get(id=meeting_id)
+    
         rooms = Rooms.objects.filter(channel=meeting)
         messages_chat, created = Chatmessages.objects.get_or_create(channel = meeting)
         print("==="*5, messages_chat, created, "==="*5)
@@ -1764,20 +1768,24 @@ def paiement_annule(request):
 @login_required
 def register_card(request):
     if request.method == 'POST':
-        card_number = request.POST.get('card_number')
+        card_number = request.POST.get('card_number').replace(" ", "")
         expiry_date = request.POST.get('expiry_date')
         cvv = request.POST.get('cvv')
-
+        print('longueur des valeurs reçues: ', len(card_number), len(expiry_date), len(cvv))
         # Vérifications basiques
         if not card_number or not expiry_date or not cvv:
             messages.error(request, "Tous les champs sont obligatoires.")
             return render(request, 'register_card.html', {'card_number': card_number, 'expiry_date': expiry_date, 'cvv': cvv})
 
         # Crée ou met à jour la carte pour l'utilisateur
-        PaymentCard.objects.update_or_create(
-            user=request.user,
-            defaults={'card_number': card_number, 'expiry_date': expiry_date, 'cvv': cvv}
-        )
+        try: 
+            PaymentCard.objects.update_or_create(
+                user=request.user,
+                defaults={'card_number': card_number, 'expiry_date': expiry_date, 'cvv': cvv}
+            )
+        except Exception as e:
+            messages.error(request, f"Erreur lors de l'enregistrement de la carte : {str(e)}")
+            return render(request, 'register_card.html', {'card_number': card_number, 'expiry_date': expiry_date, 'cvv': cvv})
 
         # Vérifie si l'utilisateur a déjà une souscription avant de la créer
         subscription, created = Subscription.objects.get_or_create(

@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-(_r8&+xf5=z(%m55lkj^p52#p87-cna&wf3&44t386iex*(haf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False  
+DEBUG = True  
 
 ALLOWED_HOSTS = ["voicetovoice.fr", "aivoicedubber.com","414f-46-193-67-154.ngrok-free.app", "127.0.0.1"]#, ,"localhost","videoadd.fggbdpcqfnguf4ga.eastus.azurecontainer.io", "aivoicedubber.com"]
 CSRF_TRUSTED_ORIGINS =["https://*.voicetovoice.fr","https://*.b5ae-46-193-67-154.ngrok-free.app", "https://b5ae-46-193-67-154.ngrok-free.app"]#,"https://aivoicedubber.com",  "https://.*aivoicedubber.com"]
@@ -46,8 +46,6 @@ INSTALLED_APPS = [
     'videoapp',
     'channels',
     'paypal.standard.ipn',
-    
-  
    # 'corsheaders',
 ]
 
