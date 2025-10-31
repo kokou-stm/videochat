@@ -80,7 +80,7 @@ class ActiveUser(models.Model):
     
 
 class Discussion(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)  # Nom unique de la discussion
     users = models.ManyToManyField(User, related_name='active_discussions', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)

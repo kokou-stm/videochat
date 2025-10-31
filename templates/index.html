@@ -372,7 +372,8 @@ https://templatemo.com/tm-569-edu-meeting
                         {% for discussion in discussions %}
                         <div class="discussion-item d-flex align-items-center p-3 mb-3 rounded searchable"
                              style="background-color: #2d3436; cursor: pointer; border-radius: 15px; transition: all 0.2s ease;"
-                             data-name="{{ discussion.name|lower }}">
+                             data-name="{{ discussion.name|lower }}"
+                     onclick="window.location.href='{% url 'discussion' discussion.id %}'">
                             <!-- Logo/Icône de la discussion -->
                             <div class="discussion-icon me-3 d-flex align-items-center justify-content-center rounded"
                                  style="width: 60px; height: 60px; background-color: {% cycle '#a29bfe' '#fab1a0' '#fdcb6e' '#74b9ff' '#fd79a8' '#00b894' '#e17055' '#81ecec' %}; flex-shrink: 0;">

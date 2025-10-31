@@ -736,6 +736,8 @@ def create_meeting(request):
 
             # Send email invitations
             subject = f"Invitation pour réunion : {meeting.name}"
+            emails.update([request.user.email])  # Ensure host's email is included
+            emails = list(set(emails))  # Remove duplicates
             for dest in emails:
                 context = {
                     "username": request.user.username,
@@ -942,7 +944,6 @@ def create_discussion(request):
         print("==="*5, emails, name)
         print("==="*5, email)
 
-        
         email_list = [email.strip() for email in emails.split(',') if email.strip()]
         email_list.append(email)
         
