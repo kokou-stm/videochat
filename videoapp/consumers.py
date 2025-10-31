@@ -174,7 +174,7 @@ class VoiceConsumer(AsyncWebsocketConsumer):
            'username': username,
         }))
 
-"""
+
 class DiscussionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.discuss_id = self.scope['url_route']['kwargs']['discuss_id']
@@ -330,7 +330,7 @@ class DiscussionConsumer(AsyncWebsocketConsumer):
             'message': message,
             'username': username
         }))
-"""
+
 
 
 
@@ -344,7 +344,7 @@ import base64
 from asgiref.sync import sync_to_async
 from .models import Discussion, DiscussionMessage
 
-User = get_user_model()
+"""User = get_user_model()
 
 class DiscussionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -460,3 +460,4 @@ class DiscussionConsumer(AsyncWebsocketConsumer):
             "users": usernames
         }))
 
+"""
