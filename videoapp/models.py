@@ -17,7 +17,7 @@ class VerificationCode(models.Model):
 
 
 class Meeting(models.Model):
-    name = models.CharField(max_length=100)  # Nom du canal
+    name = models.CharField(max_length=100, unique=True)  # Nom du canal
     password = models.CharField(max_length=100)  # Mot de passe de la réunion
     created_at = models.DateTimeField(auto_now_add=True)  # Date de création
     users = models.ManyToManyField(User, related_name='channels')
@@ -132,12 +132,11 @@ class UserSubscription(models.Model):
 
 
 
-
 from django.utils.timezone import now, timedelta
 
 class Subscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    plan = models.CharField(max_length=50, default="free")
+    plan = models.CharField(max_length=50, default="unknown")  # free, basique, hebdomadaire, illimitee
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
     credit_minutes = models.IntegerField(default=300)  # Free: 5h

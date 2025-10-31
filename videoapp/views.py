@@ -102,6 +102,27 @@ import string
 
 _ = load_dotenv(find_dotenv())
 
+
+# Decorateur pour savoir si l'utilisateur a un abonnement actif
+def abonnement_actif(view_func):
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated:
+            try:
+                subscription = Subscription.objects.get(user=request.user)
+
+                if subscription.plan != "unknown" :
+                    return view_func(request, *args, **kwargs)
+                else:
+                    messages.info(request, "Vous n'avez pas encore pris d'abonnement ou Votre abonnement a expiré . Veuillez le definir ou le renouveler pour accéder à cette fonctionnalité.")
+                    return redirect('subscribe')
+            except Subscription.DoesNotExist:
+                messages.info(request, "Vous n'avez pas d'abonnement actif. Veuillez vous abonner pour accéder à cette fonctionnalité.")
+                return redirect('subscribe')
+        else:
+            messages.info(request, "Veuillez vous connecter pour accéder à cette fonctionnalité.")
+            return redirect('login')
+    return _wrapped_view
+
 # Create your views here.
 
 @csrf_exempt
@@ -671,6 +692,7 @@ from datetime import datetime
 
 
 @login_required
+@abonnement_actif
 def create_meeting(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -689,7 +711,8 @@ def create_meeting(request):
         print('emails:', emails)
         current_host = request.get_host()
         scheme = 'https' if request.is_secure() else 'http'
-
+        if ".com" in current_host or ".org" in current_host or ".net" in current_host:
+            scheme = 'https'
         try:
             # Create the meeting
             meeting = Meeting.objects.create(
@@ -786,7 +809,7 @@ def gratos(request):
     meeting = Meeting.objects.create(name=f"{request.user.username}_home", password="1234", host=request.user )
     return redirect('home', meeting_id=meeting.id)
 
-#@login_required
+@login_required
 def home(request, meeting_id=None):
     
     if meeting_id:
@@ -877,30 +900,36 @@ def check_if_host(request, meeting_id):
     except Meeting.DoesNotExist:
         return JsonResponse({'error': 'Réunion non trouvée.'}, status=404)
     
-
+@login_required
+@csrf_exempt
 def join_meeting(request):
-
     if request.method == 'POST':
         entered_password = request.POST.get('password')
         name = request.POST.get('name')
-       
-        try: 
-            meeting = Meeting.objects.get(name=name)
+        print("Name: ", name, "password: ", entered_password)
+
+        meetings = Meeting.objects.filter(name=name)  # Utiliser filter() au lieu de get()
+        print("Meetings found: ", meetings.count())
+        if meetings.count() == 1:
+            meeting = meetings.first()  # Obtenir le premier objet
             if entered_password == meeting.password:
                 if not meeting.users.filter(id=request.user.id).exists():
                     # Ajouter l'utilisateur s'il n'existe pas déjà
                     meeting.users.add(request.user)
                     meeting.save()
-                return redirect('home', meeting_id=meeting.id)  # Rediriger vers la réunion
-        except:
-           
-            messages.info(request, "Identifiant ou mot de passe incorrect ! ")
-            # Mot de passe incorrect
-            return render(request, 'index.html', {'meeting': 'Mot de passe incorrect'})
-   
+                return redirect('home_with_meeting', meeting_id=meeting.id)  # Rediriger vers la réunion
+            else:
+                messages.info(request, "Mot de passe incorrect !")
+                return render(request, 'index.html')  # Renvoi vers la page d'accueil
+        else:
+            messages.info(request, "Réunion introuvable ou plusieurs réunions avec ce nom.")
+            return render(request, 'index.html')  # Renvoi vers la page d'accueil
+
     return render(request, 'index.html')
 
 
+@login_required
+@abonnement_actif
 def create_discussion(request):
     if request.method == 'POST':
         emails = request.POST.get('emails')  # Récupérer la chaîne des emails
@@ -1023,6 +1052,7 @@ def create_discussion(request):
         #dis, create = Discussion.objects.get_or_create()
     return render(request, "index.html")
 
+
 def joindre_discussion(request, id=None):
     discussion, created = Discussion.objects.get_or_create(id=id)
     
@@ -1104,6 +1134,7 @@ def get_django_messages(request):
     return [msg.message for msg in messages.get_messages(request)]
 
 @csrf_exempt
+@abonnement_actif
 def create_room(request, channel_name):
     if request.method == 'POST':
         meeting = Meeting.objects.get(name=channel_name)
@@ -1279,7 +1310,7 @@ def chat(question: str) -> str:
 
 
  
-
+@login_required
 def upload_file(request):
     if request.method == 'POST' and request.FILES['file']:
         file = request.FILES['file']
@@ -1737,7 +1768,7 @@ def register_card(request):
         expiry_date = request.POST.get('expiry_date')
         cvv = request.POST.get('cvv')
 
-        # Vérifications basiques (à améliorer)
+        # Vérifications basiques
         if not card_number or not expiry_date or not cvv:
             messages.error(request, "Tous les champs sont obligatoires.")
             return render(request, 'register_card.html', {'card_number': card_number, 'expiry_date': expiry_date, 'cvv': cvv})
@@ -1747,7 +1778,18 @@ def register_card(request):
             user=request.user,
             defaults={'card_number': card_number, 'expiry_date': expiry_date, 'cvv': cvv}
         )
-       
+
+        # Vérifie si l'utilisateur a déjà une souscription avant de la créer
+        subscription, created = Subscription.objects.get_or_create(
+            user=request.user,
+            defaults={'plan': "free"}
+        )
+        
+        if not created:
+            # Si la souscription existe déjà, on ne la recrée pas
+            subscription.plan = "free"  # Met à jour le plan si nécessaire
+            subscription.save()
+
         messages.success(request, "Carte enregistrée avec succès. Vous pouvez maintenant profiter du plan gratuit.")
         return redirect('index')
 
